@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SmartStepsServer.Data.Models;
+using SmartStepsServer.Data.Seed;
 
 namespace SmartStepsServer.Data;
 
@@ -121,6 +122,9 @@ public class SmartStepsDbContext : DbContext
             entity.Property(e => e.Question).IsRequired();
             entity.Property(e => e.OptionA).HasMaxLength(500).IsRequired();
             entity.Property(e => e.OptionB).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.QuestionVoiceUrl).HasColumnType("varchar(500)").HasMaxLength(500);
+            entity.Property(e => e.OptionAVoiceUrl).HasColumnType("varchar(500)").HasMaxLength(500);
+            entity.Property(e => e.OptionBVoiceUrl).HasColumnType("varchar(500)").HasMaxLength(500);
             entity.Property(e => e.CorrectAnswer).HasColumnType("char(1)").HasMaxLength(1).IsFixedLength().IsRequired();
             ConfigureAuditColumns(entity);
 
@@ -234,6 +238,9 @@ public class SmartStepsDbContext : DbContext
                 .HasForeignKey(e => e.SituationId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
+
+        ConfigureNoActionDeletes(modelBuilder);
+        ConfigureSeedData(modelBuilder);
     }
 
     private static void ConfigureAuditColumns<TEntity>(EntityTypeBuilder<TEntity> entity)
@@ -245,5 +252,139 @@ public class SmartStepsDbContext : DbContext
 
         entity.Property<DateTime?>(nameof(User.UpdatedAt))
             .HasColumnType("datetime");
+    }
+
+    private static void ConfigureNoActionDeletes(ModelBuilder modelBuilder)
+    {
+        foreach (var foreignKey in modelBuilder.Model
+            .GetEntityTypes()
+            .SelectMany(entityType => entityType.GetForeignKeys()))
+        {
+            foreignKey.DeleteBehavior = DeleteBehavior.NoAction;
+        }
+    }
+
+    private static void ConfigureSeedData(ModelBuilder modelBuilder)
+    {
+        var createdAt = new DateTime(2026, 5, 24);
+        var islands = new List<object>();
+        var skills = new List<object>();
+        var situations = new List<object>();
+        var steps = new List<object>();
+        var flashcards = new List<object>();
+        var situationSkills = new List<object>();
+        var parentReviewQuestions = new List<object>();
+
+        var islandId = 1;
+        var situationId = 1;
+        var stepId = 1;
+        var flashcardId = 1;
+        var skillId = 1;
+        var parentReviewQuestionId = 1;
+
+        foreach (var islandSeed in SmartStepsSeedData.Islands)
+        {
+            islands.Add(new
+            {
+                IslandId = islandId,
+                islandSeed.Name,
+                islandSeed.Description,
+                ImageUrl = (string?)null,
+                islandSeed.OrderIndex,
+                Status = "Active",
+                CreatedAt = createdAt,
+                UpdatedAt = (DateTime?)null
+            });
+
+            foreach (var situationSeed in islandSeed.Situations)
+            {
+                skills.Add(new
+                {
+                    SkillId = skillId,
+                    Name = situationSeed.SkillName,
+                    Description = situationSeed.SkillDescription,
+                    CreatedAt = createdAt,
+                    UpdatedAt = (DateTime?)null
+                });
+
+                situations.Add(new
+                {
+                    SituationId = situationId,
+                    IslandId = islandId,
+                    situationSeed.Title,
+                    situationSeed.Intro,
+                    situationSeed.OrderIndex,
+                    Status = "Published",
+                    CreatedAt = createdAt,
+                    UpdatedAt = (DateTime?)null
+                });
+
+                situationSkills.Add(new
+                {
+                    SituationId = situationId,
+                    SkillId = skillId
+                });
+
+                flashcards.Add(new
+                {
+                    FlashcardId = flashcardId,
+                    SituationId = situationId,
+                    situationSeed.Flashcard.Question,
+                    situationSeed.Flashcard.OptionA,
+                    situationSeed.Flashcard.OptionB,
+                    situationSeed.Flashcard.QuestionVoiceUrl,
+                    situationSeed.Flashcard.OptionAVoiceUrl,
+                    situationSeed.Flashcard.OptionBVoiceUrl,
+                    situationSeed.Flashcard.CorrectAnswer,
+                    situationSeed.Flashcard.CorrectFeedback,
+                    situationSeed.Flashcard.WrongFeedback,
+                    CreatedAt = createdAt,
+                    UpdatedAt = (DateTime?)null
+                });
+
+                parentReviewQuestions.Add(new
+                {
+                    QuestionId = parentReviewQuestionId,
+                    SkillId = skillId,
+                    SituationId = situationId,
+                    QuestionText = situationSeed.ParentPractice,
+                    SuggestedActivity = situationSeed.RiskAlert,
+                    CreatedAt = createdAt,
+                    UpdatedAt = (DateTime?)null
+                });
+
+                foreach (var stepSeed in situationSeed.Steps)
+                {
+                    steps.Add(new
+                    {
+                        StepId = stepId,
+                        SituationId = situationId,
+                        stepSeed.Content,
+                        stepSeed.MediaUrl,
+                        stepSeed.StepType,
+                        stepSeed.OrderIndex,
+                        CreatedAt = createdAt,
+                        UpdatedAt = (DateTime?)null
+                    });
+
+                    stepId++;
+                }
+
+                situationId++;
+                flashcardId++;
+                skillId++;
+                parentReviewQuestionId++;
+            }
+
+            islandId++;
+        }
+
+        modelBuilder.Entity<Island>().HasData(islands);
+        modelBuilder.Entity<Skill>().HasData(skills);
+        modelBuilder.Entity<Situation>().HasData(situations);
+        modelBuilder.Entity<SituationStep>().HasData(steps);
+        modelBuilder.Entity<Flashcard>().HasData(flashcards);
+        modelBuilder.Entity<SituationSkill>().HasData(situationSkills);
+        modelBuilder.Entity<ParentReviewQuestion>().HasData(parentReviewQuestions);
     }
 }

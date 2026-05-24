@@ -23,6 +23,15 @@ public class Flashcard
     [StringLength(500)]
     public string OptionB { get; set; } = null!;
 
+    [StringLength(500)]
+    public string? QuestionVoiceUrl { get; set; }
+
+    [StringLength(500)]
+    public string? OptionAVoiceUrl { get; set; }
+
+    [StringLength(500)]
+    public string? OptionBVoiceUrl { get; set; }
+
     [Required]
     [StringLength(1, MinimumLength = 1)]
     [RegularExpression("^[AB]$")]
