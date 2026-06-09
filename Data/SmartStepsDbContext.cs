@@ -22,6 +22,9 @@ public class SmartStepsDbContext : DbContext
     public DbSet<UserProgress> UserProgresses { get; set; } = null!;
     public DbSet<UserAnswer> UserAnswers { get; set; } = null!;
     public DbSet<ParentReviewQuestion> ParentReviewQuestions { get; set; } = null!;
+    public DbSet<PremiumSubscription> PremiumSubscriptions { get; set; } = null!;
+    public DbSet<PremiumPayment> PremiumPayments { get; set; } = null!;
+    public DbSet<PremiumCodeRedemption> PremiumCodeRedemptions { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +49,21 @@ public class SmartStepsDbContext : DbContext
             entity.HasOne(e => e.Parent)
                 .WithMany(e => e.Children)
                 .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasMany(e => e.PremiumSubscriptions)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasMany(e => e.PremiumPayments)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasMany(e => e.PremiumCodeRedemptions)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
 
@@ -236,6 +254,90 @@ public class SmartStepsDbContext : DbContext
             entity.HasOne(e => e.Situation)
                 .WithMany(e => e.ParentReviewQuestions)
                 .HasForeignKey(e => e.SituationId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // Configure PremiumPayment
+        modelBuilder.Entity<PremiumPayment>(entity =>
+        {
+            entity.ToTable("PremiumPayment", table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_PremiumPayment_Status",
+                    "[Status] IN ('Pending', 'Paid', 'Cancelled', 'Expired', 'Failed')");
+                table.HasCheckConstraint("CK_PremiumPayment_Amount", "[Amount] >= 0");
+            });
+
+            entity.HasKey(e => e.PaymentId);
+            entity.HasIndex(e => e.OrderCode).IsUnique();
+            entity.HasIndex(e => e.PaymentLinkId).IsUnique().HasFilter("[PaymentLinkId] IS NOT NULL");
+            entity.Property(e => e.PlanCode).HasColumnType("varchar(50)").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Currency).HasColumnType("varchar(10)").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Status).HasColumnType("varchar(30)").HasMaxLength(30).IsRequired();
+            entity.Property(e => e.PaymentLinkId).HasColumnType("varchar(100)").HasMaxLength(100);
+            entity.Property(e => e.CheckoutUrl).HasColumnType("varchar(500)").HasMaxLength(500);
+            entity.Property(e => e.ReturnUrl).HasColumnType("varchar(500)").HasMaxLength(500);
+            entity.Property(e => e.CancelUrl).HasColumnType("varchar(500)").HasMaxLength(500);
+            ConfigureAuditColumns(entity);
+
+            entity.HasOne(e => e.User)
+                .WithMany(e => e.PremiumPayments)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // Configure PremiumSubscription
+        modelBuilder.Entity<PremiumSubscription>(entity =>
+        {
+            entity.ToTable("PremiumSubscription", table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_PremiumSubscription_Status",
+                    "[Status] IN ('Active', 'Expired', 'Cancelled')");
+                table.HasCheckConstraint(
+                    "CK_PremiumSubscription_Source",
+                    "[Source] IN ('Payment', 'Code')");
+            });
+
+            entity.HasKey(e => e.SubscriptionId);
+            entity.HasIndex(e => new { e.UserId, e.Status });
+            entity.Property(e => e.PlanCode).HasColumnType("varchar(50)").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Status).HasColumnType("varchar(30)").HasMaxLength(30).IsRequired();
+            entity.Property(e => e.Source).HasColumnType("varchar(30)").HasMaxLength(30).IsRequired();
+            entity.Property(e => e.StartedAt).HasColumnType("datetime");
+            entity.Property(e => e.ExpiresAt).HasColumnType("datetime");
+            ConfigureAuditColumns(entity);
+
+            entity.HasOne(e => e.User)
+                .WithMany(e => e.PremiumSubscriptions)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.Payment)
+                .WithMany(e => e.PremiumSubscriptions)
+                .HasForeignKey(e => e.PaymentId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // Configure PremiumCodeRedemption
+        modelBuilder.Entity<PremiumCodeRedemption>(entity =>
+        {
+            entity.ToTable("PremiumCodeRedemption");
+            entity.HasKey(e => e.RedemptionId);
+            entity.HasIndex(e => new { e.UserId, e.Code }).IsUnique();
+            entity.Property(e => e.Code).HasColumnType("varchar(50)").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.RedeemedAt).HasColumnType("datetime");
+            ConfigureAuditColumns(entity);
+
+            entity.HasOne(e => e.User)
+                .WithMany(e => e.PremiumCodeRedemptions)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.Subscription)
+                .WithMany(e => e.CodeRedemptions)
+                .HasForeignKey(e => e.SubscriptionId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
 

@@ -45,4 +45,9 @@ public class User
     public ICollection<User> Children { get; set; } = new List<User>();
     public ICollection<UserProgress> UserProgresses { get; set; } = new List<UserProgress>();
     public ICollection<UserAnswer> UserAnswers { get; set; } = new List<UserAnswer>();
+    public ICollection<PremiumSubscription> PremiumSubscriptions { get; set; } =
+        new List<PremiumSubscription>();
+    public ICollection<PremiumPayment> PremiumPayments { get; set; } = new List<PremiumPayment>();
+    public ICollection<PremiumCodeRedemption> PremiumCodeRedemptions { get; set; } =
+        new List<PremiumCodeRedemption>();
 }

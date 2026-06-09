@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SmartStepsServer.Data;
 
@@ -11,9 +12,11 @@ using SmartStepsServer.Data;
 namespace SmartStepsServer.Migrations
 {
     [DbContext(typeof(SmartStepsDbContext))]
-    partial class SmartStepsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260609025927_AddPremiumSubscriptions")]
+    partial class AddPremiumSubscriptions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
