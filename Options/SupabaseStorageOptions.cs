@@ -19,4 +19,6 @@ public sealed class SupabaseStorageOptions
     public int SignedUrlExpiresInSeconds { get; set; } = 300;
 
     public bool RequireAuthenticatedUser { get; set; } = true;
+
+    public string? DevelopmentMediaRoot { get; set; }
 }

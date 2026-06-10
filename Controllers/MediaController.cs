@@ -82,6 +82,11 @@ public sealed class MediaController : ControllerBase
         var validationErrors = ValidateOptions(_options);
         if (validationErrors.Count > 0)
         {
+            if (_environment.IsDevelopment())
+            {
+                return await CreateDevelopmentMediaResponseAsync(request.StepId, cancellationToken);
+            }
+
             _logger.LogError(
                 "Supabase Storage is not configured correctly: {Errors}",
                 string.Join("; ", validationErrors));
@@ -172,6 +177,27 @@ public sealed class MediaController : ControllerBase
                 detail: BuildStorageFailureDetail(ex),
                 statusCode: StatusCodes.Status502BadGateway);
         }
+    }
+
+    [HttpGet("development/{stepId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDevelopmentMedia(
+        int stepId,
+        CancellationToken cancellationToken)
+    {
+        if (!_environment.IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        var mediaUrl = await GetPublishedMediaUrlAsync(stepId, cancellationToken);
+        if (!TryResolveDevelopmentMediaPath(mediaUrl, out var mediaPath))
+        {
+            return NotFound(new { message = "Development media was not found." });
+        }
+
+        return PhysicalFile(mediaPath, "video/mp4", enableRangeProcessing: true);
     }
 
     [HttpPost("signed-voice-url")]
@@ -281,6 +307,68 @@ public sealed class MediaController : ControllerBase
         }
 
         return null;
+    }
+
+    private async Task<ActionResult<CreateSignedMediaUrlResponse>> CreateDevelopmentMediaResponseAsync(
+        int stepId,
+        CancellationToken cancellationToken)
+    {
+        var mediaUrl = await GetPublishedMediaUrlAsync(stepId, cancellationToken);
+        if (!TryResolveDevelopmentMediaPath(mediaUrl, out var mediaPath))
+        {
+            return NotFound(new { message = "Development media was not found." });
+        }
+
+        var requestBaseUrl = $"{Request.Scheme}://{Request.Host}";
+        return Ok(new CreateSignedMediaUrlResponse
+        {
+            StepId = stepId,
+            Bucket = "local-development",
+            Path = Path.GetFileName(mediaPath),
+            SignedUrl = $"{requestBaseUrl}/api/media/development/{stepId}",
+            ExpiresInSeconds = _options.SignedUrlExpiresInSeconds,
+            ExpiresAtUtc = DateTime.UtcNow.AddSeconds(_options.SignedUrlExpiresInSeconds)
+        });
+    }
+
+    private async Task<string?> GetPublishedMediaUrlAsync(
+        int stepId,
+        CancellationToken cancellationToken)
+    {
+        return await _dbContext.SituationSteps
+            .AsNoTracking()
+            .Where(step =>
+                step.StepId == stepId
+                && step.Situation.Status == "Published"
+                && step.Situation.Island.Status == "Active")
+            .Select(step => step.MediaUrl)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    private bool TryResolveDevelopmentMediaPath(
+        string? mediaUrl,
+        out string mediaPath)
+    {
+        mediaPath = string.Empty;
+        if (string.IsNullOrWhiteSpace(mediaUrl)
+            || string.IsNullOrWhiteSpace(_options.DevelopmentMediaRoot))
+        {
+            return false;
+        }
+
+        var rootPath = Path.GetFullPath(
+            Path.Combine(_environment.ContentRootPath, _options.DevelopmentMediaRoot));
+        var fileName = Path.GetFileName(mediaUrl.Replace('\\', '/'));
+        var candidatePath = Path.GetFullPath(Path.Combine(rootPath, fileName));
+
+        if (!candidatePath.StartsWith(rootPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            || !System.IO.File.Exists(candidatePath))
+        {
+            return false;
+        }
+
+        mediaPath = candidatePath;
+        return true;
     }
 
     private static List<string> ValidateOptions(SupabaseStorageOptions options)
