@@ -8,19 +8,38 @@ LoadDotEnv(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
-var AllowReactApp = "_allowReactApp";
+const string AllowReactApp = "_allowReactApp";
+var port = builder.Configuration["PORT"];
+
+if (string.IsNullOrWhiteSpace(port))
+{
+    port = "8080";
+}
+
+if (!int.TryParse(port, out var parsedPort) || parsedPort is < 1 or > 65535)
+{
+    throw new InvalidOperationException("PORT must be a number between 1 and 65535.");
+}
+
+builder.WebHost.UseUrls($"http://+:{parsedPort}");
+
+var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 
 // Add services to the container.
 builder.Services.AddDbContext<SmartStepsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()));
 
-builder.Services.Configure<SupabaseStorageOptions>(
-    builder.Configuration.GetSection(SupabaseStorageOptions.SectionName));
+builder.Services.Configure<CloudinaryMediaOptions>(
+    builder.Configuration.GetSection(CloudinaryMediaOptions.SectionName));
 builder.Services.Configure<PayOsOptions>(
     builder.Configuration.GetSection(PayOsOptions.SectionName));
 
-builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>();
-builder.Services.AddHttpClient<ISupabaseStorageService, SupabaseStorageService>();
+builder.Services.AddHttpClient<ICloudinaryMediaService, CloudinaryMediaService>();
 builder.Services.AddHttpClient<IPayOsService, PayOsService>();
 
 builder.Services.AddControllers();
@@ -29,12 +48,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: AllowReactApp, policy =>
     {
-        policy.WithOrigins(
-                  "http://localhost:3000",
-                  "https://localhost:3000",
-                  "http://127.0.0.1:3000",
-                  "https://127.0.0.1:3000")
-              .AllowAnyHeader()
+        if (allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins);
+        }
+
+        policy.AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
@@ -44,17 +63,19 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+await using (var scope = app.Services.CreateAsyncScope())
 {
-    await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<SmartStepsDbContext>();
     await dbContext.Database.MigrateAsync();
+}
 
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
+{
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-if (!app.Environment.IsDevelopment())
+if (builder.Configuration.GetValue<bool>("HttpsRedirection:Enabled"))
 {
     app.UseHttpsRedirection();
 }
@@ -64,6 +85,7 @@ app.UseCors(AllowReactApp);
 
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Text("OK"));
 app.MapControllers();
 
 app.Run();

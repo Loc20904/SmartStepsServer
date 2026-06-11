@@ -34,7 +34,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Intro",
                             OrderIndex: 1,
-                            MediaUrl: "Lession1/Videos/lesson1-intro.mp4",
+                            MediaUrl: "Safety_smallitems_intro_cw1tlh.mp4",
                             Content:
                             """
                             Bối cảnh: Bé đang ngồi chơi một mình trên thảm trong phòng khách. Khi chơi xếp hình với những đồ chơi có hình dáng khác nhau, một viên bi đồ chơi tròn lấp lánh văng ra khỏi mô hình.
@@ -50,7 +50,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Story",
                             OrderIndex: 3,
-                            MediaUrl: "Lession1/Videos/lesson1-wrong.mp4",
+                            MediaUrl: "Safety_smallitems_wrong_pjogba.mp4",
                             Content:
                             """
                             Consequence: Bé đưa viên bi vào miệng, ho sặc sụa, hoảng sợ và tay ôm cổ.
@@ -60,7 +60,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Result",
                             OrderIndex: 4,
-                            MediaUrl: "Lession1/Videos/lesson1-correct.mp4",
+                            MediaUrl: "Safety_smallitems_correct_u5ubla.mp4",
                             Content:
                             """
                             Good outcome: Bé nắm chặt viên bi trong lòng bàn tay, chạy đến chỗ mẹ. Mẹ xoa đầu bé khen ngợi và cất viên bi vào tủ cao.
@@ -89,7 +89,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Intro",
                             OrderIndex: 1,
-                            MediaUrl: null,
+                            MediaUrl: "Safety_stranger_Intro_chanol.mp4",
                             Content:
                             """
                             Bối cảnh: Bé đang chơi lắp ráp mô hình robot trên sàn nhà. Ngay sát góc tường là một ổ cắm điện tầm thấp nằm đúng tầm tay của bé.
@@ -101,7 +101,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Story",
                             OrderIndex: 3,
-                            MediaUrl: null,
+                            MediaUrl: "Safety_stranger_wrong_dgsjbj.mp4",
                             Content:
                             """
                             Consequence: Bé đưa thanh sắt chạm vào lỗ ổ điện, màn hình chớp nháy như bị điện giật. Nhân vật giật mình ngã lùi ra sau, tay ôm ngực hoảng sợ.
@@ -111,7 +111,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Result",
                             OrderIndex: 4,
-                            MediaUrl: null,
+                            MediaUrl: "Safety_stranger_correct_rkwehk.mp4",
                             Content:
                             """
                             Good outcome: Bé quay lưng lại với ổ điện, vui vẻ lắp ráp tiếp robot. Bố đi qua dùng nút bịt an toàn gắn chặt vào ổ điện.
@@ -140,7 +140,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Intro",
                             OrderIndex: 1,
-                            MediaUrl: null,
+                            MediaUrl: "cross-road-intro_tnrhmy.mp4",
                             Content:
                             """
                             Bối cảnh: Mẹ vừa đun nước xong để pha sữa. Chiếc bình thủy điện được đặt tạm trên một chiếc bàn thấp ở phòng bếp.
@@ -152,7 +152,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Story",
                             OrderIndex: 3,
-                            MediaUrl: null,
+                            MediaUrl: "cross-road-wrong_fnc8fg.mp4",
                             Content:
                             """
                             Consequence: Bé ấn mạnh vào nút đỏ, nước sôi phun ra từ vòi trúng vào tay bé. Màn hình hiện hơi nước nóng, tay nhân vật đỏ sưng tấy.
@@ -162,7 +162,7 @@ internal static class SmartStepsSeedData
                         new SmartStepsSituationStepSeed(
                             StepType: "Result",
                             OrderIndex: 4,
-                            MediaUrl: null,
+                            MediaUrl: "cross-road-correct_r36izw.mp4",
                             Content:
                             """
                             Good outcome: Bé rụt tay lại, không bấm nút nữa mà chạy ra phòng khách tìm mẹ. Mẹ dắt tay bé và khen ngợi vì bé biết tự bảo vệ mình.

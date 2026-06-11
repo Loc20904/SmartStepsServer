@@ -15,24 +15,23 @@ GET /api/situations
 GET /api/situations/{id}
 ```
 
-## Private Supabase Storage media
+## Private Cloudinary media
 
-Use the backend to create short-lived signed URLs for private Storage files. Do not put the Supabase `service_role` key in the mobile app.
+Use the backend to create short-lived signed URLs for private Cloudinary media. Do not put the Cloudinary API secret in the mobile app.
 
 Set these values on the server through environment variables:
 
 ```powershell
-$env:SupabaseStorage__Url="https://your-project-ref.supabase.co"
-$env:SupabaseStorage__ServiceRoleKey="your-service-role-key"
-$env:SupabaseStorage__Bucket="smartsteps-media"
-$env:SupabaseStorage__SignedUrlExpiresInSeconds="300"
+$env:Cloudinary__CloudName="your-cloud-name"
+$env:Cloudinary__ApiKey="your-api-key"
+$env:Cloudinary__ApiSecret="your-api-secret"
+$env:Cloudinary__SignedUrlExpiresInSeconds="300"
 ```
 
-Call the API with a Supabase Auth access token:
+The server signs Cloudinary download URLs for published lesson videos and voice clips. The frontend does not need to call Cloudinary directly.
 
 ```http
 POST /api/media/signed-url
-Authorization: Bearer <supabase-access-token>
 Content-Type: application/json
 
 {
@@ -40,7 +39,7 @@ Content-Type: application/json
 }
 ```
 
-The endpoint only signs media from a published `SituationStep`. Store `SituationStep.MediaUrl` as either the object path inside the bucket, for example `videos/lesson-1.mp4`, or a Supabase Storage URL for the configured bucket.
+The endpoint only signs media from a published `SituationStep`. Store `SituationStep.MediaUrl` as either the Cloudinary public ID path, for example `Safety_smallitems_intro_cw1tlh.mp4`, or a Cloudinary delivery URL for the configured cloud.
 
 ## Premium subscriptions and payOS
 
