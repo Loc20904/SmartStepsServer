@@ -3,34 +3,136 @@ using SmartStepsServer.Data;
 using SmartStepsServer.Options;
 using SmartStepsServer.Services;
 
+LoadDotEnv(Path.Combine(AppContext.BaseDirectory, ".env"));
+LoadDotEnv(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+
 var builder = WebApplication.CreateBuilder(args);
+
+const string AllowReactApp = "_allowReactApp";
+var port = builder.Configuration["PORT"];
+
+if (string.IsNullOrWhiteSpace(port))
+{
+    port = "8080";
+}
+
+if (!int.TryParse(port, out var parsedPort) || parsedPort is < 1 or > 65535)
+{
+    throw new InvalidOperationException("PORT must be a number between 1 and 65535.");
+}
+
+builder.WebHost.UseUrls($"http://+:{parsedPort}");
+
+var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 
 // Add services to the container.
 builder.Services.AddDbContext<SmartStepsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.Configure<SupabaseStorageOptions>(
-    builder.Configuration.GetSection(SupabaseStorageOptions.SectionName));
-builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>();
-builder.Services.AddHttpClient<ISupabaseStorageService, SupabaseStorageService>();
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()));
+
+builder.Services.Configure<CloudinaryMediaOptions>(
+    builder.Configuration.GetSection(CloudinaryMediaOptions.SectionName));
+builder.Services.Configure<PayOsOptions>(
+    builder.Configuration.GetSection(PayOsOptions.SectionName));
+
+builder.Services.AddHttpClient<ICloudinaryMediaService, CloudinaryMediaService>();
+builder.Services.AddHttpClient<IPayOsService, PayOsService>();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: AllowReactApp, policy =>
+    {
+        if (allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins);
+        }
+
+        policy.AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<SmartStepsDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (builder.Configuration.GetValue<bool>("HttpsRedirection:Enabled"))
+{
+    app.UseHttpsRedirection();
+}
+
+// CORS phải đặt trước Authorization
+app.UseCors(AllowReactApp);
 
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Text("OK"));
 app.MapControllers();
 
 app.Run();
+
+static void LoadDotEnv(string path)
+{
+    if (!File.Exists(path))
+    {
+        return;
+    }
+
+    foreach (var rawLine in File.ReadAllLines(path))
+    {
+        var line = rawLine.Trim();
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
+        {
+            continue;
+        }
+
+        if (line.StartsWith("$env:", StringComparison.OrdinalIgnoreCase))
+        {
+            line = line[5..];
+        }
+
+        var separatorIndex = line.IndexOf('=');
+        if (separatorIndex <= 0)
+        {
+            continue;
+        }
+
+        var key = line[..separatorIndex].Trim();
+        var value = line[(separatorIndex + 1)..].Trim();
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            continue;
+        }
+
+        if ((value.StartsWith('"') && value.EndsWith('"')) ||
+            (value.StartsWith('\'') && value.EndsWith('\'')))
+        {
+            value = value[1..^1];
+        }
+
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, value);
+        }
+    }
+}

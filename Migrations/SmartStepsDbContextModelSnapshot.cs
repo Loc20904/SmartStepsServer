@@ -397,6 +397,189 @@ namespace SmartStepsServer.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumCodeRedemption", b =>
+                {
+                    b.Property<int>("RedemptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RedemptionId"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<DateTime>("RedeemedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("SubscriptionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RedemptionId");
+
+                    b.HasIndex("SubscriptionId");
+
+                    b.HasIndex("UserId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("PremiumCodeRedemption", (string)null);
+                });
+
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumPayment", b =>
+                {
+                    b.Property<int>("PaymentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CancelUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("CheckoutUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("OrderCode")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("PaymentLinkId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("PlanCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("QrCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReturnUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PaymentId");
+
+                    b.HasIndex("OrderCode")
+                        .IsUnique();
+
+                    b.HasIndex("PaymentLinkId")
+                        .IsUnique()
+                        .HasFilter("[PaymentLinkId] IS NOT NULL");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PremiumPayment", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PremiumPayment_Amount", "[Amount] >= 0");
+
+                            t.HasCheckConstraint("CK_PremiumPayment_Status", "[Status] IN ('Pending', 'Paid', 'Cancelled', 'Expired', 'Failed')");
+                        });
+                });
+
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumSubscription", b =>
+                {
+                    b.Property<int>("SubscriptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubscriptionId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PlanCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SubscriptionId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("PremiumSubscription", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PremiumSubscription_Source", "[Source] IN ('Payment', 'Code')");
+
+                            t.HasCheckConstraint("CK_PremiumSubscription_Status", "[Status] IN ('Active', 'Expired', 'Cancelled')");
+                        });
+                });
+
             modelBuilder.Entity("SmartStepsServer.Data.Models.Situation", b =>
                 {
                     b.Property<int>("SituationId")
@@ -1251,6 +1434,54 @@ namespace SmartStepsServer.Migrations
                     b.Navigation("Skill");
                 });
 
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumCodeRedemption", b =>
+                {
+                    b.HasOne("SmartStepsServer.Data.Models.PremiumSubscription", "Subscription")
+                        .WithMany("CodeRedemptions")
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("SmartStepsServer.Data.Models.User", "User")
+                        .WithMany("PremiumCodeRedemptions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Subscription");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumPayment", b =>
+                {
+                    b.HasOne("SmartStepsServer.Data.Models.User", "User")
+                        .WithMany("PremiumPayments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumSubscription", b =>
+                {
+                    b.HasOne("SmartStepsServer.Data.Models.PremiumPayment", "Payment")
+                        .WithMany("PremiumSubscriptions")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SmartStepsServer.Data.Models.User", "User")
+                        .WithMany("PremiumSubscriptions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SmartStepsServer.Data.Models.Situation", b =>
                 {
                     b.HasOne("SmartStepsServer.Data.Models.Island", "Island")
@@ -1368,6 +1599,16 @@ namespace SmartStepsServer.Migrations
                     b.Navigation("UserProgresses");
                 });
 
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumPayment", b =>
+                {
+                    b.Navigation("PremiumSubscriptions");
+                });
+
+            modelBuilder.Entity("SmartStepsServer.Data.Models.PremiumSubscription", b =>
+                {
+                    b.Navigation("CodeRedemptions");
+                });
+
             modelBuilder.Entity("SmartStepsServer.Data.Models.Situation", b =>
                 {
                     b.Navigation("Flashcards");
@@ -1396,6 +1637,12 @@ namespace SmartStepsServer.Migrations
             modelBuilder.Entity("SmartStepsServer.Data.Models.User", b =>
                 {
                     b.Navigation("Children");
+
+                    b.Navigation("PremiumCodeRedemptions");
+
+                    b.Navigation("PremiumPayments");
+
+                    b.Navigation("PremiumSubscriptions");
 
                     b.Navigation("UserAnswers");
 

@@ -13,32 +13,29 @@ namespace SmartStepsServer.Controllers;
 public sealed class MediaController : ControllerBase
 {
     private readonly SmartStepsDbContext _dbContext;
-    private readonly ISupabaseAuthService _authService;
-    private readonly ISupabaseStorageService _storageService;
-    private readonly SupabaseStorageOptions _options;
+    private readonly ICloudinaryMediaService _cloudinaryMediaService;
+    private readonly CloudinaryMediaOptions _options;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<MediaController> _logger;
 
     public MediaController(
         SmartStepsDbContext dbContext,
-        ISupabaseAuthService authService,
-        ISupabaseStorageService storageService,
-        IOptions<SupabaseStorageOptions> options,
+        ICloudinaryMediaService cloudinaryMediaService,
+        IOptions<CloudinaryMediaOptions> options,
         IWebHostEnvironment environment,
         ILogger<MediaController> logger)
     {
         _dbContext = dbContext;
-        _authService = authService;
-        _storageService = storageService;
+        _cloudinaryMediaService = cloudinaryMediaService;
         _options = options.Value;
         _environment = environment;
         _logger = logger;
     }
 
-    [HttpGet("storage-config")]
-    [ProducesResponseType(typeof(StorageConfigDiagnosticsResponse), StatusCodes.Status200OK)]
+    [HttpGet("cloudinary-config")]
+    [ProducesResponseType(typeof(CloudinaryConfigDiagnosticsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<StorageConfigDiagnosticsResponse> GetStorageConfig()
+    public ActionResult<CloudinaryConfigDiagnosticsResponse> GetCloudinaryConfig()
     {
         if (!_environment.IsDevelopment())
         {
@@ -46,24 +43,25 @@ public sealed class MediaController : ControllerBase
         }
 
         var validationErrors = ValidateOptions(_options);
-        return Ok(new StorageConfigDiagnosticsResponse
+        return Ok(new CloudinaryConfigDiagnosticsResponse
         {
             EnvironmentName = _environment.EnvironmentName,
-            Effective = new EffectiveStorageConfig
+            Effective = new EffectiveCloudinaryConfig
             {
-                Url = _options.Url,
-                Bucket = _options.Bucket,
+                CloudName = _options.CloudName,
+                ApiKeyConfigured = !string.IsNullOrWhiteSpace(_options.ApiKey),
                 SignedUrlExpiresInSeconds = _options.SignedUrlExpiresInSeconds,
-                RequireAuthenticatedUser = _options.RequireAuthenticatedUser,
-                ServiceRoleKeyConfigured = !string.IsNullOrWhiteSpace(_options.ServiceRoleKey)
+                ResourceType = _options.ResourceType,
+                DeliveryType = _options.DeliveryType
             },
-            EnvironmentVariables = new StorageEnvironmentVariables
+            EnvironmentVariables = new CloudinaryEnvironmentVariables
             {
-                Url = ReadNonSecretEnvironmentVariable("SupabaseStorage__Url"),
-                Bucket = ReadNonSecretEnvironmentVariable("SupabaseStorage__Bucket"),
-                SignedUrlExpiresInSeconds = ReadNonSecretEnvironmentVariable("SupabaseStorage__SignedUrlExpiresInSeconds"),
-                RequireAuthenticatedUser = ReadNonSecretEnvironmentVariable("SupabaseStorage__RequireAuthenticatedUser"),
-                ServiceRoleKey = ReadSecretEnvironmentVariable("SupabaseStorage__ServiceRoleKey")
+                CloudName = ReadNonSecretEnvironmentVariable("Cloudinary__CloudName"),
+                ApiKey = ReadNonSecretEnvironmentVariable("Cloudinary__ApiKey"),
+                ApiSecret = ReadSecretEnvironmentVariable("Cloudinary__ApiSecret"),
+                SignedUrlExpiresInSeconds = ReadNonSecretEnvironmentVariable("Cloudinary__SignedUrlExpiresInSeconds"),
+                ResourceType = ReadNonSecretEnvironmentVariable("Cloudinary__ResourceType"),
+                DeliveryType = ReadNonSecretEnvironmentVariable("Cloudinary__DeliveryType")
             },
             ValidationErrors = validationErrors
         });
@@ -82,38 +80,18 @@ public sealed class MediaController : ControllerBase
         var validationErrors = ValidateOptions(_options);
         if (validationErrors.Count > 0)
         {
+            if (_environment.IsDevelopment())
+            {
+                return await CreateDevelopmentMediaResponseAsync(request.StepId, cancellationToken);
+            }
+
             _logger.LogError(
-                "Supabase Storage is not configured correctly: {Errors}",
+                "Cloudinary is not configured correctly: {Errors}",
                 string.Join("; ", validationErrors));
             return Problem(
-                title: "Supabase Storage is not configured.",
+                title: "Cloudinary is not configured.",
                 detail: string.Join("; ", validationErrors),
                 statusCode: StatusCodes.Status500InternalServerError);
-        }
-
-        if (_options.RequireAuthenticatedUser)
-        {
-            var accessToken = GetBearerToken();
-            if (string.IsNullOrWhiteSpace(accessToken))
-            {
-                return Unauthorized(new { message = "Missing Supabase access token." });
-            }
-
-            try
-            {
-                var user = await _authService.GetUserAsync(accessToken, cancellationToken);
-                if (user is null)
-                {
-                    return Unauthorized(new { message = "Invalid Supabase access token." });
-                }
-            }
-            catch (SupabaseAuthException ex)
-            {
-                _logger.LogError(ex, "Could not validate Supabase access token.");
-                return Problem(
-                    title: "Could not validate access token.",
-                    statusCode: StatusCodes.Status502BadGateway);
-            }
         }
 
         var media = await _dbContext.SituationSteps
@@ -134,44 +112,66 @@ public sealed class MediaController : ControllerBase
             return NotFound(new { message = "Media was not found." });
         }
 
-        if (!TryGetObjectPath(media.MediaUrl, _options, out var objectPath))
+        if (!TryGetObjectPath(media.MediaUrl, out var objectPath))
         {
             _logger.LogError(
-                "Invalid media URL/path for step {StepId}: {MediaUrl}",
+                "Invalid Cloudinary media URL/path for step {StepId}: {MediaUrl}",
                 media.StepId,
                 media.MediaUrl);
             return Problem(
                 title: "Media path is invalid.",
-                detail: $"Step {media.StepId} has MediaUrl '{media.MediaUrl}', which is not a valid object path for bucket '{_options.Bucket}'.",
+                detail: $"Step {media.StepId} has MediaUrl '{media.MediaUrl}', which is not a valid Cloudinary public ID.",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
 
         try
         {
-            var signedUrl = await _storageService.CreateSignedUrlAsync(
-                _options.Bucket,
-                objectPath,
+            var signedUrl = await _cloudinaryMediaService.CreateSignedDownloadUrlAsync(
+                media.MediaUrl,
+                _options.ResourceType,
+                "mp4",
                 _options.SignedUrlExpiresInSeconds,
                 cancellationToken);
 
             return Ok(new CreateSignedMediaUrlResponse
             {
                 StepId = media.StepId,
-                Bucket = _options.Bucket,
+                Bucket = _options.CloudName,
                 Path = objectPath,
                 SignedUrl = signedUrl,
                 ExpiresInSeconds = _options.SignedUrlExpiresInSeconds,
                 ExpiresAtUtc = DateTime.UtcNow.AddSeconds(_options.SignedUrlExpiresInSeconds)
             });
         }
-        catch (SupabaseStorageException ex)
+        catch (CloudinaryMediaException ex)
         {
             _logger.LogError(ex, "Could not create signed URL for step {StepId}.", media.StepId);
             return Problem(
                 title: "Could not create signed media URL.",
-                detail: BuildStorageFailureDetail(ex),
+                detail: ex.Message,
                 statusCode: StatusCodes.Status502BadGateway);
         }
+    }
+
+    [HttpGet("development/{stepId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDevelopmentMedia(
+        int stepId,
+        CancellationToken cancellationToken)
+    {
+        if (!_environment.IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        var mediaUrl = await GetPublishedMediaUrlAsync(stepId, cancellationToken);
+        if (!TryResolveDevelopmentMediaPath(mediaUrl, out var mediaPath, out _))
+        {
+            return NotFound(new { message = "Development media was not found." });
+        }
+
+        return PhysicalFile(mediaPath, "video/mp4", enableRangeProcessing: true);
     }
 
     [HttpPost("signed-voice-url")]
@@ -188,45 +188,20 @@ public sealed class MediaController : ControllerBase
         if (validationErrors.Count > 0)
         {
             _logger.LogError(
-                "Supabase Storage is not configured correctly: {Errors}",
+                "Cloudinary is not configured correctly: {Errors}",
                 string.Join("; ", validationErrors));
             return Problem(
-                title: "Supabase Storage is not configured.",
+                title: "Cloudinary is not configured.",
                 detail: string.Join("; ", validationErrors),
                 statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        if (_options.RequireAuthenticatedUser)
-        {
-            var accessToken = GetBearerToken();
-            if (string.IsNullOrWhiteSpace(accessToken))
-            {
-                return Unauthorized(new { message = "Missing Supabase access token." });
-            }
-
-            try
-            {
-                var user = await _authService.GetUserAsync(accessToken, cancellationToken);
-                if (user is null)
-                {
-                    return Unauthorized(new { message = "Invalid Supabase access token." });
-                }
-            }
-            catch (SupabaseAuthException ex)
-            {
-                _logger.LogError(ex, "Could not validate Supabase access token.");
-                return Problem(
-                    title: "Could not validate access token.",
-                    statusCode: StatusCodes.Status502BadGateway);
-            }
-        }
-
-        if (!TryGetObjectPath(request.MediaUrl, _options, out var objectPath))
+        if (!TryGetObjectPath(request.MediaUrl, out var objectPath))
         {
             _logger.LogError("Invalid voice media URL/path: {MediaUrl}", request.MediaUrl);
             return Problem(
                 title: "Voice media path is invalid.",
-                detail: $"MediaUrl '{request.MediaUrl}' is not a valid object path for bucket '{_options.Bucket}'.",
+                detail: $"MediaUrl '{request.MediaUrl}' is not a valid Cloudinary public ID.",
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
@@ -247,51 +222,119 @@ public sealed class MediaController : ControllerBase
 
         try
         {
-            var signedUrl = await _storageService.CreateSignedUrlAsync(
-                _options.Bucket,
-                objectPath,
+            var signedUrl = await _cloudinaryMediaService.CreateSignedDownloadUrlAsync(
+                request.MediaUrl,
+                _options.ResourceType,
+                "mp3",
                 _options.SignedUrlExpiresInSeconds,
                 cancellationToken);
 
             return Ok(new CreateSignedVoiceUrlResponse
             {
-                Bucket = _options.Bucket,
+                Bucket = _options.CloudName,
                 Path = objectPath,
                 SignedUrl = signedUrl,
                 ExpiresInSeconds = _options.SignedUrlExpiresInSeconds,
                 ExpiresAtUtc = DateTime.UtcNow.AddSeconds(_options.SignedUrlExpiresInSeconds)
             });
         }
-        catch (SupabaseStorageException ex)
+        catch (CloudinaryMediaException ex)
         {
             _logger.LogError(ex, "Could not create signed voice URL for {MediaUrl}.", request.MediaUrl);
             return Problem(
                 title: "Could not create signed voice URL.",
-                detail: BuildStorageFailureDetail(ex),
+                detail: ex.Message,
                 statusCode: StatusCodes.Status502BadGateway);
         }
     }
 
-    private string? GetBearerToken()
+    private async Task<ActionResult<CreateSignedMediaUrlResponse>> CreateDevelopmentMediaResponseAsync(
+        int stepId,
+        CancellationToken cancellationToken)
     {
-        var authorization = Request.Headers.Authorization.ToString();
-        if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        var mediaUrl = await GetPublishedMediaUrlAsync(stepId, cancellationToken);
+        if (!TryResolveDevelopmentMediaPath(mediaUrl, out var mediaPath, out var relativePath))
         {
-            return authorization["Bearer ".Length..].Trim();
+            return NotFound(new { message = "Development media was not found." });
         }
 
-        return null;
+        var requestBaseUrl = $"{Request.Scheme}://{Request.Host}";
+        return Ok(new CreateSignedMediaUrlResponse
+        {
+            StepId = stepId,
+            Bucket = "local-development",
+            Path = relativePath,
+            SignedUrl = $"{requestBaseUrl}/api/media/development/{stepId}",
+            ExpiresInSeconds = _options.SignedUrlExpiresInSeconds,
+            ExpiresAtUtc = DateTime.UtcNow.AddSeconds(_options.SignedUrlExpiresInSeconds)
+        });
     }
 
-    private static List<string> ValidateOptions(SupabaseStorageOptions options)
+    private async Task<string?> GetPublishedMediaUrlAsync(
+        int stepId,
+        CancellationToken cancellationToken)
+    {
+        return await _dbContext.SituationSteps
+            .AsNoTracking()
+            .Where(step =>
+                step.StepId == stepId
+                && step.Situation.Status == "Published"
+                && step.Situation.Island.Status == "Active")
+            .Select(step => step.MediaUrl)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    private bool TryResolveDevelopmentMediaPath(
+        string? mediaUrl,
+        out string mediaPath,
+        out string relativePath)
+    {
+        mediaPath = string.Empty;
+        relativePath = string.Empty;
+        if (string.IsNullOrWhiteSpace(mediaUrl)
+            || string.IsNullOrWhiteSpace(_options.DevelopmentMediaRoot))
+        {
+            return false;
+        }
+
+        if (!TryGetObjectPath(mediaUrl, out relativePath))
+        {
+            return false;
+        }
+
+        var rootPath = Path.GetFullPath(
+            Path.Combine(_environment.ContentRootPath, _options.DevelopmentMediaRoot));
+        var candidatePath = Path.GetFullPath(Path.Combine(rootPath, relativePath));
+
+        if (!candidatePath.StartsWith(rootPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            || !System.IO.File.Exists(candidatePath))
+        {
+            return false;
+        }
+
+        mediaPath = candidatePath;
+        return true;
+    }
+
+    private static List<string> ValidateOptions(CloudinaryMediaOptions options)
     {
         var results = new List<ValidationResult>();
         var context = new ValidationContext(options);
         Validator.TryValidateObject(options, context, results, validateAllProperties: true);
 
-        if (!Uri.TryCreate(options.Url, UriKind.Absolute, out _))
+        if (string.IsNullOrWhiteSpace(options.CloudName))
         {
-            results.Add(new ValidationResult("SupabaseStorage:Url must be an absolute URL."));
+            results.Add(new ValidationResult("Cloudinary:CloudName is required."));
+        }
+
+        if (string.IsNullOrWhiteSpace(options.ResourceType))
+        {
+            results.Add(new ValidationResult("Cloudinary:ResourceType is required."));
+        }
+
+        if (!string.Equals(options.ResourceType, "video", StringComparison.OrdinalIgnoreCase))
+        {
+            results.Add(new ValidationResult("Cloudinary:ResourceType must be 'video' for the current media pipeline."));
         }
 
         return results
@@ -302,7 +345,6 @@ public sealed class MediaController : ControllerBase
 
     private static bool TryGetObjectPath(
         string mediaUrl,
-        SupabaseStorageOptions options,
         out string objectPath)
     {
         objectPath = string.Empty;
@@ -310,13 +352,13 @@ public sealed class MediaController : ControllerBase
 
         if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
         {
-            if (!Uri.TryCreate(options.Url, UriKind.Absolute, out var supabaseUri)
-                || !string.Equals(uri.Host, supabaseUri.Host, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(uri.Host, "api.cloudinary.com", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(uri.Host, "res.cloudinary.com", StringComparison.OrdinalIgnoreCase))
             {
-                return false;
+                return TryExtractCloudinaryObjectPath(uri, out objectPath);
             }
 
-            return TryExtractObjectPath(uri.AbsolutePath, options.Bucket, out objectPath);
+            value = uri.AbsolutePath;
         }
 
         var queryIndex = value.IndexOfAny(new[] { '?', '#' });
@@ -326,17 +368,7 @@ public sealed class MediaController : ControllerBase
         }
 
         value = value.Replace('\\', '/').TrimStart('/');
-        if (TryExtractObjectPath(value, options.Bucket, out objectPath))
-        {
-            return true;
-        }
-
-        if (value.StartsWith(options.Bucket + "/", StringComparison.OrdinalIgnoreCase))
-        {
-            value = value[(options.Bucket.Length + 1)..];
-        }
-
-        if (!IsSafeObjectPath(value))
+        if (!IsSafePublicId(value))
         {
             return false;
         }
@@ -345,52 +377,64 @@ public sealed class MediaController : ControllerBase
         return true;
     }
 
-    private static bool TryExtractObjectPath(
-        string path,
-        string bucket,
+    private static bool TryExtractCloudinaryObjectPath(
+        Uri uri,
         out string objectPath)
     {
         objectPath = string.Empty;
-        var segments = path
+        if (string.Equals(uri.Host, "api.cloudinary.com", StringComparison.OrdinalIgnoreCase))
+        {
+            var query = uri.Query.TrimStart('?');
+            var parameters = query.Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => part.Split('=', 2))
+                .Where(part => part.Length == 2)
+                .ToDictionary(
+                    part => Uri.UnescapeDataString(part[0]),
+                    part => Uri.UnescapeDataString(part[1]),
+                    StringComparer.OrdinalIgnoreCase);
+
+            if (parameters.TryGetValue("public_id", out var publicId)
+                && !string.IsNullOrWhiteSpace(publicId))
+            {
+                var format = parameters.TryGetValue("format", out var queryFormat) && !string.IsNullOrWhiteSpace(queryFormat)
+                    ? queryFormat
+                    : null;
+
+                objectPath = string.IsNullOrWhiteSpace(format)
+                    ? publicId
+                    : $"{publicId}.{format}";
+                return true;
+            }
+
+            return false;
+        }
+
+        var segments = uri.AbsolutePath
             .Split('/', StringSplitOptions.RemoveEmptyEntries)
             .Select(Uri.UnescapeDataString)
             .ToArray();
 
-        for (var index = 0; index <= segments.Length - 5; index++)
+        var resourceTypeIndex = Array.FindIndex(segments, segment =>
+            string.Equals(segment, "image", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(segment, "video", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(segment, "raw", StringComparison.OrdinalIgnoreCase));
+
+        if (resourceTypeIndex < 0 || resourceTypeIndex + 2 >= segments.Length)
         {
-            var isStorageObjectUrl =
-                string.Equals(segments[index], "storage", StringComparison.OrdinalIgnoreCase)
-                && string.Equals(segments[index + 1], "v1", StringComparison.OrdinalIgnoreCase)
-                && string.Equals(segments[index + 2], "object", StringComparison.OrdinalIgnoreCase)
-                && IsStorageAccessSegment(segments[index + 3])
-                && string.Equals(segments[index + 4], bucket, StringComparison.OrdinalIgnoreCase);
-
-            if (!isStorageObjectUrl)
-            {
-                continue;
-            }
-
-            var candidate = string.Join("/", segments.Skip(index + 5));
-            if (!IsSafeObjectPath(candidate))
-            {
-                return false;
-            }
-
-            objectPath = candidate;
-            return true;
+            return false;
         }
 
-        return false;
+        var candidate = string.Join("/", segments.Skip(resourceTypeIndex + 2));
+        if (!IsSafePublicId(candidate))
+        {
+            return false;
+        }
+
+        objectPath = candidate;
+        return true;
     }
 
-    private static bool IsStorageAccessSegment(string segment)
-    {
-        return string.Equals(segment, "public", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(segment, "sign", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(segment, "authenticated", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool IsSafeObjectPath(string value)
+    private static bool IsSafePublicId(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -400,41 +444,6 @@ public sealed class MediaController : ControllerBase
         var segments = value.Split('/', StringSplitOptions.RemoveEmptyEntries);
         return segments.Length > 0
             && segments.All(segment => segment is not "." and not "..");
-    }
-
-    private static string BuildStorageFailureDetail(SupabaseStorageException exception)
-    {
-        var parts = new List<string> { exception.Message };
-
-        if (exception.StatusCode is { } statusCode)
-        {
-            parts.Add($"Supabase returned {(int)statusCode} ({statusCode}).");
-        }
-
-        if (!string.IsNullOrWhiteSpace(exception.Bucket)
-            && !string.IsNullOrWhiteSpace(exception.ObjectPath))
-        {
-            parts.Add($"Bucket: '{exception.Bucket}', path: '{exception.ObjectPath}'.");
-        }
-
-        if (exception.RequestUri is { } requestUri)
-        {
-            parts.Add($"Request URL: '{requestUri}'.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(exception.ResponseBody))
-        {
-            parts.Add($"Response: {Truncate(exception.ResponseBody, 1000)}");
-        }
-
-        return string.Join(" ", parts);
-    }
-
-    private static string Truncate(string value, int maxLength)
-    {
-        return value.Length <= maxLength
-            ? value
-            : value[..maxLength] + "...";
     }
 
     private static EnvironmentVariableDiagnostics ReadNonSecretEnvironmentVariable(string name)
@@ -497,41 +506,43 @@ public sealed class CreateSignedVoiceUrlResponse
     public DateTime ExpiresAtUtc { get; set; }
 }
 
-public sealed class StorageConfigDiagnosticsResponse
+public sealed class CloudinaryConfigDiagnosticsResponse
 {
     public string EnvironmentName { get; set; } = string.Empty;
 
-    public EffectiveStorageConfig Effective { get; set; } = new();
+    public EffectiveCloudinaryConfig Effective { get; set; } = new();
 
-    public StorageEnvironmentVariables EnvironmentVariables { get; set; } = new();
+    public CloudinaryEnvironmentVariables EnvironmentVariables { get; set; } = new();
 
     public List<string> ValidationErrors { get; set; } = new();
 }
 
-public sealed class EffectiveStorageConfig
+public sealed class EffectiveCloudinaryConfig
 {
-    public string Url { get; set; } = string.Empty;
+    public string CloudName { get; set; } = string.Empty;
 
-    public string Bucket { get; set; } = string.Empty;
+    public bool ApiKeyConfigured { get; set; }
 
     public int SignedUrlExpiresInSeconds { get; set; }
 
-    public bool RequireAuthenticatedUser { get; set; }
+    public string ResourceType { get; set; } = string.Empty;
 
-    public bool ServiceRoleKeyConfigured { get; set; }
+    public string DeliveryType { get; set; } = string.Empty;
 }
 
-public sealed class StorageEnvironmentVariables
+public sealed class CloudinaryEnvironmentVariables
 {
-    public EnvironmentVariableDiagnostics Url { get; set; } = new();
+    public EnvironmentVariableDiagnostics CloudName { get; set; } = new();
 
-    public EnvironmentVariableDiagnostics Bucket { get; set; } = new();
+    public EnvironmentVariableDiagnostics ApiKey { get; set; } = new();
+
+    public EnvironmentVariableDiagnostics ApiSecret { get; set; } = new();
 
     public EnvironmentVariableDiagnostics SignedUrlExpiresInSeconds { get; set; } = new();
 
-    public EnvironmentVariableDiagnostics RequireAuthenticatedUser { get; set; } = new();
+    public EnvironmentVariableDiagnostics ResourceType { get; set; } = new();
 
-    public EnvironmentVariableDiagnostics ServiceRoleKey { get; set; } = new();
+    public EnvironmentVariableDiagnostics DeliveryType { get; set; } = new();
 }
 
 public sealed class EnvironmentVariableDiagnostics
