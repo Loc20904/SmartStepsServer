@@ -2,8 +2,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SmartStepsServer.Data;
 
 #nullable disable
@@ -17,18 +17,18 @@ namespace SmartStepsServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.4")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("SmartStepsServer.Data.Models.Flashcard", b =>
                 {
                     b.Property<int>("FlashcardId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FlashcardId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FlashcardId"));
 
                     b.Property<string>("CorrectAnswer")
                         .IsRequired()
@@ -37,17 +37,17 @@ namespace SmartStepsServer.Migrations
                         .IsFixedLength();
 
                     b.Property<string>("CorrectFeedback")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("OptionA")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("OptionAVoiceUrl")
                         .HasMaxLength(500)
@@ -56,7 +56,7 @@ namespace SmartStepsServer.Migrations
                     b.Property<string>("OptionB")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("OptionBVoiceUrl")
                         .HasMaxLength(500)
@@ -64,20 +64,20 @@ namespace SmartStepsServer.Migrations
 
                     b.Property<string>("Question")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("QuestionVoiceUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
                     b.Property<int>("SituationId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("WrongFeedback")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("FlashcardId");
 
@@ -85,7 +85,7 @@ namespace SmartStepsServer.Migrations
 
                     b.ToTable("Flashcard", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Flashcard_CorrectAnswer", "\"CorrectAnswer\" IN ('A', 'B')");
+                            t.HasCheckConstraint("CK_Flashcard_CorrectAnswer", "[CorrectAnswer] IN ('A', 'B')");
                         });
 
                     b.HasData(
@@ -94,7 +94,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 1,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Bé ngoan lắm! Gặp đồ vật nhỏ lạ rơi trên sàn, hãy đưa ngay cho người lớn nhé!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Bỏ vào miệng để nếm thử xem sao.",
                             OptionAVoiceUrl = "Lession1/Voices/choice-put-mouth.mp3",
                             OptionB = "Mang đến đưa cho bố mẹ và nói: \"Con nhặt được cái này ạ!\"",
@@ -109,7 +109,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 2,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Hoan hô bé! Ổ điện không phải là đồ chơi, tránh xa ổ điện là an toàn nhất!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Chọc thanh sắt vào lỗ xem robot có biến hình không.",
                             OptionB = "Cất thanh sắt vào hộp đồ chơi và tránh xa ổ điện.",
                             Question = "Ổ cắm điện nguy hiểm đấy. Con định làm gì?",
@@ -121,7 +121,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 3,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Giỏi lắm! Bé đã nhận biết được nước nóng nguy hiểm và không nghịch nút bấm lung tung!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Nhấn thử cái nút đỏ xem chuyện gì xảy ra.",
                             OptionB = "Tránh xa chiếc bình và đi tìm mẹ.",
                             Question = "Bình thủy đang chứa nước rất nóng. Con sẽ làm gì?",
@@ -133,7 +133,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 4,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Giỏi lắm! Chúng ta luôn chờ đèn xanh để qua đường an toàn!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Chạy nhanh qua đường.",
                             OptionB = "Đứng lại chờ đèn xanh.",
                             Question = "Xe đang chạy rất đông. Con nên làm gì trước khi qua đường?",
@@ -145,7 +145,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 5,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Giỏi lắm! Nhờ người lớn giúp đỡ là cách an toàn nhất.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Chạy đi tìm mẹ khắp nơi.",
                             OptionB = "Đứng yên và tìm nhân viên giúp đỡ.",
                             Question = "Nếu bị lạc trong siêu thị, con nên làm gì?",
@@ -157,7 +157,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 6,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Giỏi lắm! Khi gặp nơi nguy hiểm, hãy nhờ người lớn giúp đỡ.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Tự chạy lại lấy bóng.",
                             OptionB = "Tìm người lớn giúp đỡ.",
                             Question = "Hồ nước có thể rất sâu và trơn. Con nên làm gì bây giờ?",
@@ -169,7 +169,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 7,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Quá xuất sắc! Cảnh giác và chạy đi tìm người lớn tin cậy là cách bảo vệ mình thông minh nhất!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Tin lời cô, bước lên xe ô tô để về với mẹ.",
                             OptionB = "Lùi lại, nói to \"Cháu không đi!\" và chạy vào trường báo cô giáo.",
                             Question = "Người lạ nói mẹ nhờ đến đón. Con sẽ xử lý thế nào?",
@@ -181,7 +181,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 8,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Tuyệt vời! Biết nói không với trò chơi nguy hiểm chứng tỏ con rất trưởng thành!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Nhắm mắt trèo rào sang lấy bóng để chứng tỏ mình không nhát gan.",
                             OptionB = "Kiên quyết từ chối bạn và đi tìm người lớn nhờ lấy giúp.",
                             Question = "Các bạn đang ép con làm một việc nguy hiểm. Con nên làm gì?",
@@ -193,7 +193,7 @@ namespace SmartStepsServer.Migrations
                             FlashcardId = 9,
                             CorrectAnswer = "B",
                             CorrectFeedback = "Rất đáng tự hào! Sự trung thực của con đáng giá hơn bất kỳ món đồ chơi nào trên đời!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OptionA = "Lén nhặt chiếc ví giấu vào túi quần để mang về.",
                             OptionB = "Chạy nhanh nhặt lên và lớn tiếng gọi: \"Cô ơi, cô đánh rơi ví này!\"",
                             Question = "Nhặt được đồ không phải của mình, mà lại không có ai nhìn thấy. Con sẽ quyết định thế nào?",
@@ -206,18 +206,18 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("IslandId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IslandId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IslandId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(500)
@@ -226,10 +226,10 @@ namespace SmartStepsServer.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("OrderIndex")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -237,20 +237,20 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.HasKey("IslandId");
 
                     b.ToTable("Island", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Island_Status", "\"Status\" IN ('Active', 'Hidden')");
+                            t.HasCheckConstraint("CK_Island_Status", "[Status] IN ('Active', 'Hidden')");
                         });
 
                     b.HasData(
                         new
                         {
                             IslandId = 1,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Level 1 - An toàn cá nhân",
                             Name = "Personal Safety",
                             OrderIndex = 1,
@@ -259,7 +259,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             IslandId = 2,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Level 2 - An toàn môi trường",
                             Name = "Environmental Safety",
                             OrderIndex = 2,
@@ -268,7 +268,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             IslandId = 3,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Level 3 - An toàn xã hội",
                             Name = "Social Safety",
                             OrderIndex = 3,
@@ -280,30 +280,30 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("QuestionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("QuestionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("QuestionId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("QuestionText")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SituationId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("SuggestedActivity")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.HasKey("QuestionId");
 
@@ -317,7 +317,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 1,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Hãy kiểm tra đồ chơi của bé thường xuyên xem có bị lỏng ốc hoặc có những thứ rơi ra ngoài không.",
                             SituationId = 1,
                             SkillId = 1,
@@ -326,7 +326,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 2,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Hôm nay, hãy cùng bé đi một vòng quanh nhà và chỉ cho bé các vị trí ổ điện cấm chạm vào.",
                             SituationId = 2,
                             SkillId = 2,
@@ -335,7 +335,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 3,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Hãy chỉ cho bé phích nước hoặc bình thủy trong nhà và dạy bé từ Nóng kèm hành động rụt tay lại.",
                             SituationId = 3,
                             SkillId = 3,
@@ -344,7 +344,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 4,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Hôm nay khi ra đường hãy hỏi bé đèn màu nào được đi.",
                             SituationId = 4,
                             SkillId = 4,
@@ -353,7 +353,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 5,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Hãy hỏi bé: nếu bị lạc trong siêu thị thì con sẽ làm gì?",
                             SituationId = 5,
                             SkillId = 5,
@@ -362,7 +362,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 6,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Hãy hỏi bé: nếu đồ chơi rơi xuống hồ nước thì con sẽ làm gì?",
                             SituationId = 6,
                             SkillId = 6,
@@ -371,7 +371,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 7,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Ba mẹ hãy cùng bé tạo ra một mật khẩu bí mật. Dặn bé chỉ đi theo ai đọc đúng mật khẩu này.",
                             SituationId = 7,
                             SkillId = 7,
@@ -380,7 +380,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 8,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Đóng vai bạn bè rủ bé làm việc sai, ví dụ lén ăn vụng kẹo trước bữa cơm, xem bé có dám từ chối ba mẹ không.",
                             SituationId = 8,
                             SkillId = 8,
@@ -389,7 +389,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             QuestionId = 9,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuestionText = "Ba mẹ thử cố tình đánh rơi một tờ tiền lẻ trong phòng bé, xem bé sẽ giữ lấy hay đem trả lại cho ba mẹ.",
                             SituationId = 9,
                             SkillId = 9,
@@ -401,9 +401,9 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("RedemptionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RedemptionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RedemptionId"));
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -412,20 +412,20 @@ namespace SmartStepsServer.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<DateTime>("RedeemedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("SubscriptionId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("RedemptionId");
 
@@ -441,12 +441,12 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("PaymentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
 
                     b.Property<int>("Amount")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("CancelUrl")
                         .HasMaxLength(500)
@@ -458,8 +458,8 @@ namespace SmartStepsServer.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -469,13 +469,13 @@ namespace SmartStepsServer.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<long>("OrderCode")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("PaymentLinkId")
                         .HasMaxLength(100)
@@ -487,7 +487,7 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(50)");
 
                     b.Property<string>("QrCode")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ReturnUrl")
                         .HasMaxLength(500)
@@ -499,10 +499,10 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("PaymentId");
 
@@ -511,15 +511,15 @@ namespace SmartStepsServer.Migrations
 
                     b.HasIndex("PaymentLinkId")
                         .IsUnique()
-                        .HasFilter("\"PaymentLinkId\" IS NOT NULL");
+                        .HasFilter("[PaymentLinkId] IS NOT NULL");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("PremiumPayment", null, t =>
                         {
-                            t.HasCheckConstraint("CK_PremiumPayment_Amount", "\"Amount\" >= 0");
+                            t.HasCheckConstraint("CK_PremiumPayment_Amount", "[Amount] >= 0");
 
-                            t.HasCheckConstraint("CK_PremiumPayment_Status", "\"Status\" IN ('Pending', 'Paid', 'Cancelled', 'Expired', 'Failed')");
+                            t.HasCheckConstraint("CK_PremiumPayment_Status", "[Status] IN ('Pending', 'Paid', 'Cancelled', 'Expired', 'Failed')");
                         });
                 });
 
@@ -527,20 +527,20 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("SubscriptionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubscriptionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubscriptionId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int?>("PaymentId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("PlanCode")
                         .IsRequired()
@@ -553,7 +553,7 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(30)");
 
                     b.Property<DateTime>("StartedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -561,10 +561,10 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("SubscriptionId");
 
@@ -574,9 +574,9 @@ namespace SmartStepsServer.Migrations
 
                     b.ToTable("PremiumSubscription", null, t =>
                         {
-                            t.HasCheckConstraint("CK_PremiumSubscription_Source", "\"Source\" IN ('Payment', 'Code')");
+                            t.HasCheckConstraint("CK_PremiumSubscription_Source", "[Source] IN ('Payment', 'Code')");
 
-                            t.HasCheckConstraint("CK_PremiumSubscription_Status", "\"Status\" IN ('Active', 'Expired', 'Cancelled')");
+                            t.HasCheckConstraint("CK_PremiumSubscription_Status", "[Status] IN ('Active', 'Expired', 'Cancelled')");
                         });
                 });
 
@@ -584,23 +584,23 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("SituationId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SituationId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SituationId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("Intro")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("IslandId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("OrderIndex")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -610,10 +610,10 @@ namespace SmartStepsServer.Migrations
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.HasKey("SituationId");
 
@@ -621,14 +621,14 @@ namespace SmartStepsServer.Migrations
 
                     b.ToTable("Situation", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Situation_Status", "\"Status\" IN ('Draft', 'Pending', 'Approved', 'Rejected', 'Published', 'Hidden')");
+                            t.HasCheckConstraint("CK_Situation_Status", "[Status] IN ('Draft', 'Pending', 'Approved', 'Rejected', 'Published', 'Hidden')");
                         });
 
                     b.HasData(
                         new
                         {
                             SituationId = 1,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách nhận biết vật nhỏ lạ, không bỏ vào miệng và đưa cho người lớn.",
                             IslandId = 1,
                             OrderIndex = 1,
@@ -638,7 +638,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 2,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách tránh xa ổ cắm điện và không chọc vật kim loại vào ổ điện.",
                             IslandId = 1,
                             OrderIndex = 2,
@@ -648,7 +648,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 3,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách tránh xa bình nước nóng và không tự ý nghịch nút bấm.",
                             IslandId = 1,
                             OrderIndex = 3,
@@ -658,7 +658,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 4,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách chờ đèn xanh, nắm tay người lớn và nhìn hai bên trước khi qua đường.",
                             IslandId = 2,
                             OrderIndex = 1,
@@ -668,7 +668,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 5,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách đứng yên và tìm nhân viên giúp đỡ khi không thấy ba mẹ.",
                             IslandId = 2,
                             OrderIndex = 2,
@@ -678,7 +678,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 6,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách tránh xa mép nước và tìm người lớn khi đồ chơi rơi xuống hồ.",
                             IslandId = 2,
                             OrderIndex = 3,
@@ -688,7 +688,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 7,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách cảnh giác với người lạ dù người đó biết tên mình hoặc nói quen ba mẹ.",
                             IslandId = 3,
                             OrderIndex = 1,
@@ -698,7 +698,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 8,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách nói không với lời thách đố nguy hiểm và tìm người lớn giúp đỡ.",
                             IslandId = 3,
                             OrderIndex = 2,
@@ -708,7 +708,7 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SituationId = 9,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Intro = "Bé học cách trung thực trả lại của rơi dù không có ai nhìn thấy.",
                             IslandId = 3,
                             OrderIndex = 3,
@@ -720,11 +720,11 @@ namespace SmartStepsServer.Migrations
             modelBuilder.Entity("SmartStepsServer.Data.Models.SituationSkill", b =>
                 {
                     b.Property<int>("SituationId")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnOrder(0);
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnOrder(1);
 
                     b.HasKey("SituationId", "SkillId");
@@ -785,27 +785,27 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("StepId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("StepId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StepId"));
 
                     b.Property<string>("Content")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("MediaUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
                     b.Property<int>("OrderIndex")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("SituationId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("StepType")
                         .IsRequired()
@@ -813,7 +813,7 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.HasKey("StepId");
 
@@ -821,16 +821,16 @@ namespace SmartStepsServer.Migrations
 
                     b.ToTable("SituationStep", null, t =>
                         {
-                            t.HasCheckConstraint("CK_SituationStep_StepType", "\"StepType\" IN ('Intro', 'Story', 'Flashcard', 'Result')");
+                            t.HasCheckConstraint("CK_SituationStep_StepType", "[StepType] IN ('Intro', 'Story', 'Flashcard', 'Result')");
                         });
 
                     b.HasData(
                         new
                         {
                             StepId = 1,
-                            Content = "Bối cảnh: Bé đang ngồi chơi một mình trên thảm trong phòng khách. Khi chơi xếp hình với những đồ chơi có hình dáng khác nhau, một viên bi đồ chơi tròn lấp lánh văng ra khỏi mô hình.\r\nOpening Animation: Bé bò lại gần và nhặt viên bi lên ngắm nghía.\r\nVoice POV của bé: \"Ồ, viên kẹo tròn này lấp lánh đẹp quá! Không biết vị của nó có ngọt như kẹo mút không nhỉ?\"\r\nVoice người hướng dẫn: \"Đó không phải là kẹo đâu bé ơi! Con định làm gì với vật tròn nhỏ này?\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "Safety_smallitems_intro_cw1tlh.mp4",
+                            Content = "Bối cảnh: Bé đang ngồi chơi một mình trên thảm trong phòng khách. Khi chơi xếp hình với những đồ chơi có hình dáng khác nhau, một viên bi đồ chơi tròn lấp lánh văng ra khỏi mô hình.\nOpening Animation: Bé bò lại gần và nhặt viên bi lên ngắm nghía.\nVoice POV của bé: \"Ồ, viên kẹo tròn này lấp lánh đẹp quá! Không biết vị của nó có ngọt như kẹo mút không nhỉ?\"\nVoice người hướng dẫn: \"Đó không phải là kẹo đâu bé ơi! Con định làm gì với vật tròn nhỏ này?\"",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MediaUrl = "Lession1/Videos/lesson1-intro.mp4",
                             OrderIndex = 1,
                             SituationId = 1,
                             StepType = "Intro"
@@ -839,7 +839,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 2,
                             Content = "A. Bỏ vào miệng để nếm thử xem sao. B. Mang đến đưa cho bố mẹ và nói: \"Con nhặt được cái này ạ!\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 1,
                             StepType = "Flashcard"
@@ -847,9 +847,9 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 3,
-                            Content = "Consequence: Bé đưa viên bi vào miệng, ho sặc sụa, hoảng sợ và tay ôm cổ.\r\nVoice Narrator: \"Nguy hiểm quá! Đồ vật nhỏ không phải đồ ăn, bỏ vào miệng sẽ gây hóc, nghẹt thở và làm đau bụng bé đấy!\"\r\nVoice hướng dẫn sửa sai: \"Tuyệt đối không bỏ bất cứ vật lạ nào vào miệng con nhé!\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "Safety_smallitems_wrong_pjogba.mp4",
+                            Content = "Consequence: Bé đưa viên bi vào miệng, ho sặc sụa, hoảng sợ và tay ôm cổ.\nVoice Narrator: \"Nguy hiểm quá! Đồ vật nhỏ không phải đồ ăn, bỏ vào miệng sẽ gây hóc, nghẹt thở và làm đau bụng bé đấy!\"\nVoice hướng dẫn sửa sai: \"Tuyệt đối không bỏ bất cứ vật lạ nào vào miệng con nhé!\"",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MediaUrl = "Lession1/Videos/lesson1-wrong.mp4",
                             OrderIndex = 3,
                             SituationId = 1,
                             StepType = "Story"
@@ -857,9 +857,9 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 4,
-                            Content = "Good outcome: Bé nắm chặt viên bi trong lòng bàn tay, chạy đến chỗ mẹ. Mẹ xoa đầu bé khen ngợi và cất viên bi vào tủ cao.\r\nVoice Narrator: \"Bé ngoan lắm! Gặp đồ vật nhỏ lạ rơi trên sàn, hãy đưa ngay cho người lớn nhé!\"\r\nReward: Bé không bỏ vật lạ vào miệng! +1 Safety Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "Safety_smallitems_correct_u5ubla.mp4",
+                            Content = "Good outcome: Bé nắm chặt viên bi trong lòng bàn tay, chạy đến chỗ mẹ. Mẹ xoa đầu bé khen ngợi và cất viên bi vào tủ cao.\nVoice Narrator: \"Bé ngoan lắm! Gặp đồ vật nhỏ lạ rơi trên sàn, hãy đưa ngay cho người lớn nhé!\"\nReward: Bé không bỏ vật lạ vào miệng! +1 Safety Star.",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MediaUrl = "Lession1/Videos/lesson1-correct.mp4",
                             OrderIndex = 4,
                             SituationId = 1,
                             StepType = "Result"
@@ -867,9 +867,8 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 5,
-                            Content = "Bối cảnh: Bé đang chơi lắp ráp mô hình robot trên sàn nhà. Ngay sát góc tường là một ổ cắm điện tầm thấp nằm đúng tầm tay của bé.\r\nOpening Animation: Bé cầm một thanh đồ chơi bằng sắt nhỏ, dài. Ánh mắt bé va phải hai cái lỗ nhỏ của ổ cắm điện trên tường.\r\nVoice POV của bé: \"Ơ, hai cái lỗ trên tường này trông giống như đôi mắt của robot nhỉ? Vừa khít với thanh sắt mình đang cầm luôn!\"\r\nVoice người hướng dẫn: \"Cẩn thận nhé bé ơi! Đó là ổ cắm điện nguy hiểm đấy. Con định làm gì?\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "Safety_stranger_Intro_chanol.mp4",
+                            Content = "Bối cảnh: Bé đang chơi lắp ráp mô hình robot trên sàn nhà. Ngay sát góc tường là một ổ cắm điện tầm thấp nằm đúng tầm tay của bé.\nOpening Animation: Bé cầm một thanh đồ chơi bằng sắt nhỏ, dài. Ánh mắt bé va phải hai cái lỗ nhỏ của ổ cắm điện trên tường.\nVoice POV của bé: \"Ơ, hai cái lỗ trên tường này trông giống như đôi mắt của robot nhỉ? Vừa khít với thanh sắt mình đang cầm luôn!\"\nVoice người hướng dẫn: \"Cẩn thận nhé bé ơi! Đó là ổ cắm điện nguy hiểm đấy. Con định làm gì?\"",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 2,
                             StepType = "Intro"
@@ -878,7 +877,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 6,
                             Content = "A. Chọc thanh sắt vào lỗ xem robot có biến hình không. B. Cất thanh sắt vào hộp đồ chơi và tránh xa ổ điện.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 2,
                             StepType = "Flashcard"
@@ -886,9 +885,8 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 7,
-                            Content = "Consequence: Bé đưa thanh sắt chạm vào lỗ ổ điện, màn hình chớp nháy như bị điện giật. Nhân vật giật mình ngã lùi ra sau, tay ôm ngực hoảng sợ.\r\nVoice Narrator: \"Ôi không! Ổ điện có điện bên trong, chọc đồ kim loại vào sẽ bị điện giật rất đau!\"\r\nVoice hướng dẫn sửa sai: \"Không bao giờ được dùng tay hoặc đồ vật chọc vào ổ điện con nhé!\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "Safety_stranger_wrong_dgsjbj.mp4",
+                            Content = "Consequence: Bé đưa thanh sắt chạm vào lỗ ổ điện, màn hình chớp nháy như bị điện giật. Nhân vật giật mình ngã lùi ra sau, tay ôm ngực hoảng sợ.\nVoice Narrator: \"Ôi không! Ổ điện có điện bên trong, chọc đồ kim loại vào sẽ bị điện giật rất đau!\"\nVoice hướng dẫn sửa sai: \"Không bao giờ được dùng tay hoặc đồ vật chọc vào ổ điện con nhé!\"",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 2,
                             StepType = "Story"
@@ -896,9 +894,8 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 8,
-                            Content = "Good outcome: Bé quay lưng lại với ổ điện, vui vẻ lắp ráp tiếp robot. Bố đi qua dùng nút bịt an toàn gắn chặt vào ổ điện.\r\nVoice Narrator: \"Hoan hô bé! Ổ điện không phải là đồ chơi, tránh xa ổ điện là an toàn nhất!\"\r\nReward: Bé biết tránh xa ổ điện! +1 Safety Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "Safety_stranger_correct_rkwehk.mp4",
+                            Content = "Good outcome: Bé quay lưng lại với ổ điện, vui vẻ lắp ráp tiếp robot. Bố đi qua dùng nút bịt an toàn gắn chặt vào ổ điện.\nVoice Narrator: \"Hoan hô bé! Ổ điện không phải là đồ chơi, tránh xa ổ điện là an toàn nhất!\"\nReward: Bé biết tránh xa ổ điện! +1 Safety Star.",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 2,
                             StepType = "Result"
@@ -906,9 +903,8 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 9,
-                            Content = "Bối cảnh: Mẹ vừa đun nước xong để pha sữa. Chiếc bình thủy điện được đặt tạm trên một chiếc bàn thấp ở phòng bếp.\r\nOpening Animation: Chiếc bình thủy điện có cái nút nhấn màu đỏ phát sáng. Bé đi ngang qua và bị thu hút bởi cái nút bấm đó.\r\nVoice POV của bé: \"Wow, cái nút màu đỏ này phát sáng đẹp quá! Giống như nút bấm phóng tên lửa của phi hành gia vậy, mình phải bấm thử mới được!\"\r\nVoice người hướng dẫn: \"Dừng lại đã bé ơi! Bình thủy đang chứa nước rất nóng đấy. Con sẽ làm gì?\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "cross-road-intro_tnrhmy.mp4",
+                            Content = "Bối cảnh: Mẹ vừa đun nước xong để pha sữa. Chiếc bình thủy điện được đặt tạm trên một chiếc bàn thấp ở phòng bếp.\nOpening Animation: Chiếc bình thủy điện có cái nút nhấn màu đỏ phát sáng. Bé đi ngang qua và bị thu hút bởi cái nút bấm đó.\nVoice POV của bé: \"Wow, cái nút màu đỏ này phát sáng đẹp quá! Giống như nút bấm phóng tên lửa của phi hành gia vậy, mình phải bấm thử mới được!\"\nVoice người hướng dẫn: \"Dừng lại đã bé ơi! Bình thủy đang chứa nước rất nóng đấy. Con sẽ làm gì?\"",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 3,
                             StepType = "Intro"
@@ -917,7 +913,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 10,
                             Content = "A. Nhấn thử cái nút đỏ xem chuyện gì xảy ra. B. Tránh xa chiếc bình và đi tìm mẹ.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 3,
                             StepType = "Flashcard"
@@ -925,9 +921,8 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 11,
-                            Content = "Consequence: Bé ấn mạnh vào nút đỏ, nước sôi phun ra từ vòi trúng vào tay bé. Màn hình hiện hơi nước nóng, tay nhân vật đỏ sưng tấy.\r\nVoice Narrator: \"Ôi không! Nước trong bình cực kỳ nóng, ấn nút làm nước sôi tràn ra gây bỏng tay bé rồi!\"\r\nVoice hướng dẫn sửa sai: \"Khi thấy bình nước nóng, con tuyệt đối không được tự ý ấn nút hay nghịch ngợm nhé!\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "cross-road-wrong_fnc8fg.mp4",
+                            Content = "Consequence: Bé ấn mạnh vào nút đỏ, nước sôi phun ra từ vòi trúng vào tay bé. Màn hình hiện hơi nước nóng, tay nhân vật đỏ sưng tấy.\nVoice Narrator: \"Ôi không! Nước trong bình cực kỳ nóng, ấn nút làm nước sôi tràn ra gây bỏng tay bé rồi!\"\nVoice hướng dẫn sửa sai: \"Khi thấy bình nước nóng, con tuyệt đối không được tự ý ấn nút hay nghịch ngợm nhé!\"",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 3,
                             StepType = "Story"
@@ -935,9 +930,8 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             StepId = 12,
-                            Content = "Good outcome: Bé rụt tay lại, không bấm nút nữa mà chạy ra phòng khách tìm mẹ. Mẹ dắt tay bé và khen ngợi vì bé biết tự bảo vệ mình.\r\nVoice Narrator: \"Giỏi lắm! Bé đã nhận biết được nước nóng nguy hiểm và không nghịch nút bấm lung tung!\"\r\nReward: Bé không nghịch thiết bị nước nóng! +1 Safety Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MediaUrl = "cross-road-correct_r36izw.mp4",
+                            Content = "Good outcome: Bé rụt tay lại, không bấm nút nữa mà chạy ra phòng khách tìm mẹ. Mẹ dắt tay bé và khen ngợi vì bé biết tự bảo vệ mình.\nVoice Narrator: \"Giỏi lắm! Bé đã nhận biết được nước nóng nguy hiểm và không nghịch nút bấm lung tung!\"\nReward: Bé không nghịch thiết bị nước nóng! +1 Safety Star.",
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 3,
                             StepType = "Result"
@@ -946,7 +940,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 13,
                             Content = "Bối cảnh: Bé đi bộ cùng mẹ trên đường về nhà. Phía bên kia đường có tiệm kem rất hấp dẫn. Xe máy chạy qua liên tục và đèn giao thông đang màu đỏ.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 4,
                             StepType = "Intro"
@@ -955,7 +949,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 14,
                             Content = "A. Chạy nhanh qua đường. B. Đứng lại chờ đèn xanh.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 4,
                             StepType = "Flashcard"
@@ -964,7 +958,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 15,
                             Content = "Consequence: Bé chạy xuống đường, còi xe kêu liên tục, xe thắng gấp và màn hình rung nhẹ. Narrator: Qua đường khi đèn đỏ rất nguy hiểm.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 4,
                             StepType = "Story"
@@ -973,7 +967,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 16,
                             Content = "Good outcome: Bé đứng cạnh mẹ, chờ đèn xanh bật rồi hai mẹ con nắm tay qua đường. Reward: Bé biết chờ đèn xanh! +1 Safety Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 4,
                             StepType = "Result"
@@ -982,7 +976,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 17,
                             Content = "Bối cảnh: Bé đang đi siêu thị cùng mẹ. Bé nhìn đồ chơi, quay lại và không thấy mẹ đâu.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 5,
                             StepType = "Intro"
@@ -991,7 +985,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 18,
                             Content = "A. Chạy đi tìm mẹ khắp nơi. B. Đứng yên và tìm nhân viên giúp đỡ.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 5,
                             StepType = "Flashcard"
@@ -1000,7 +994,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 19,
                             Content = "Consequence: Bé chạy lung tung, càng đi càng xa và nhạc trở nên căng thẳng. Narrator: Chạy lung tung có thể làm mình lạc xa hơn.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 5,
                             StepType = "Story"
@@ -1009,7 +1003,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 20,
                             Content = "Good outcome: Bé gặp cô nhân viên, cô phát loa và mẹ tìm thấy bé. Reward: Bé biết xử lý khi bị lạc!",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 5,
                             StepType = "Result"
@@ -1018,7 +1012,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 21,
                             Content = "Bối cảnh: Bé đang tự chơi bóng trong công viên gần hồ nước. Quả bóng lăn nhanh về phía hồ rồi rơi xuống nước và nổi gần mép hồ.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 6,
                             StepType = "Intro"
@@ -1027,7 +1021,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 22,
                             Content = "A. Tự chạy lại lấy bóng. B. Tìm người lớn giúp đỡ.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 6,
                             StepType = "Flashcard"
@@ -1036,7 +1030,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 23,
                             Content = "Consequence: Bé chạy tới mép hồ, cúi xuống lấy bóng. Mặt đất trơn làm bé bị trượt chân, nước bắn lên và bé sợ hãi.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 6,
                             StepType = "Story"
@@ -1045,7 +1039,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 24,
                             Content = "Good outcome: Bé chạy tới chú bảo vệ công viên. Chú bảo vệ dùng cây vợt dài lấy bóng lên giúp bé. Reward: Bé biết tránh xa hồ nước sâu! +1 Safety Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 6,
                             StepType = "Result"
@@ -1054,7 +1048,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 25,
                             Content = "Bối cảnh: Bé đang đứng đợi mẹ ở cổng trường. Một người phụ nữ ăn mặc lịch sự, đi xe ô tô đến, gọi đúng tên bé và tươi cười vẫy gọi.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 7,
                             StepType = "Intro"
@@ -1063,7 +1057,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 26,
                             Content = "A. Tin lời cô, bước lên xe ô tô để về với mẹ. B. Lùi lại, nói to \"Cháu không đi!\" và chạy vào trường báo cô giáo.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 7,
                             StepType = "Flashcard"
@@ -1072,7 +1066,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 27,
                             Content = "Consequence: Bé vừa bước lên xe, cửa xe đóng sập lại, xe lao vút đi và màn hình nhấp nháy đỏ. Narrator: Rất nguy hiểm! Kẻ xấu có thể giả vờ quen biết mẹ con.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 7,
                             StepType = "Story"
@@ -1081,7 +1075,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 28,
                             Content = "Good outcome: Bé lùi lại, chạy thẳng vào cổng trường gọi cô giáo. Người phụ nữ lạ thấy vậy vội vàng bỏ đi. Reward: Bé không mắc mưu kẻ xấu! +1 Brave Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 7,
                             StepType = "Result"
@@ -1090,7 +1084,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 29,
                             Content = "Bối cảnh: Bé đang chơi đá bóng cùng nhóm bạn. Quả bóng bay qua hàng rào rơi vào sân nhà hàng xóm có nuôi chó dữ.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 8,
                             StepType = "Intro"
@@ -1099,7 +1093,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 30,
                             Content = "A. Nhắm mắt trèo rào sang lấy bóng để chứng tỏ mình không nhát gan. B. Kiên quyết từ chối bạn và đi tìm người lớn nhờ lấy giúp.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 8,
                             StepType = "Flashcard"
@@ -1108,7 +1102,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 31,
                             Content = "Consequence: Bé leo lên hàng rào, trượt chân té ngã. Con chó chạy ra sủa ầm ĩ và bé khóc vì sợ và đau.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 8,
                             StepType = "Story"
@@ -1117,7 +1111,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 32,
                             Content = "Good outcome: Bé lắc đầu kiên quyết nói không, chạy đi gọi chú chủ nhà. Chú mở cửa lấy bóng ra, cả nhóm bạn nể phục bé. Reward: Bé biết nói KHÔNG với nguy hiểm! +1 Shield Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 8,
                             StepType = "Result"
@@ -1126,7 +1120,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 33,
                             Content = "Bối cảnh: Bé đang đi rửa tay trong khu vui chơi thì thấy một người đi trước làm rơi chiếc ví. Người đó đi khuất, chiếc ví mở hé ra và bên trong có nhiều tờ tiền.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 1,
                             SituationId = 9,
                             StepType = "Intro"
@@ -1135,7 +1129,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 34,
                             Content = "A. Lén nhặt chiếc ví giấu vào túi quần để mang về. B. Chạy nhanh nhặt lên và lớn tiếng gọi: \"Cô ơi, cô đánh rơi ví này!\"",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 2,
                             SituationId = 9,
                             StepType = "Flashcard"
@@ -1144,7 +1138,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 35,
                             Content = "Consequence: Bé cất ví. Lát sau thấy người phụ nữ quay lại khóc lóc nhờ bảo vệ tìm ví vì có giấy tờ nhập viện cho em bé. Bé cúi mặt hối hận.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 3,
                             SituationId = 9,
                             StepType = "Story"
@@ -1153,7 +1147,7 @@ namespace SmartStepsServer.Migrations
                         {
                             StepId = 36,
                             Content = "Good outcome: Bé nhặt ví chạy theo đưa tận tay. Người phụ nữ mừng rỡ cảm ơn và tặng bé một sticker Ngôi Sao. Reward: Bé là em bé trung thực! +1 Honesty Star.",
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             OrderIndex = 4,
                             SituationId = 9,
                             StepType = "Result"
@@ -1164,26 +1158,26 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("SkillId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SkillId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SkillId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.HasKey("SkillId");
 
@@ -1193,63 +1187,63 @@ namespace SmartStepsServer.Migrations
                         new
                         {
                             SkillId = 1,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Nhận biết đồ vật nguy hiểm có nguy cơ gây hóc/nuốt phải; biết phân biệt đồ ăn được và không ăn được.",
                             Name = "An toàn dị vật"
                         },
                         new
                         {
                             SkillId = 2,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Nhận biết mối nguy hiểm từ dòng điện; không tự ý chạm hoặc nhét vật lạ vào ổ cắm.",
                             Name = "An toàn điện"
                         },
                         new
                         {
                             SkillId = 3,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Nhận biết mối nguy hại từ thiết bị gia dụng có chứa nước sôi/nhiệt độ cao; kiềm chế hành vi tò mò nguy hiểm.",
                             Name = "An toàn nước nóng"
                         },
                         new
                         {
                             SkillId = 4,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Biết chờ đèn xanh trước khi qua đường.",
                             Name = "An toàn giao thông"
                         },
                         new
                         {
                             SkillId = 5,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Biết tìm người giúp đỡ khi bị lạc.",
                             Name = "Xử lý khi bị lạc"
                         },
                         new
                         {
                             SkillId = 6,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Biết tìm người lớn giúp đỡ khi gặp nguy hiểm gần hồ nước hoặc hồ bơi.",
                             Name = "An toàn hồ nước"
                         },
                         new
                         {
                             SkillId = 7,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Cảnh giác với người lạ giả danh người quen.",
                             Name = "Cảnh giác người lạ"
                         },
                         new
                         {
                             SkillId = 8,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Từ chối áp lực bạn bè và không làm việc nguy hiểm để chứng tỏ bản thân.",
                             Name = "Từ chối áp lực bạn bè"
                         },
                         new
                         {
                             SkillId = 9,
-                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 5, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Vượt qua lòng tham, trung thực trả lại của rơi.",
                             Name = "Trung thực"
                         });
@@ -1259,14 +1253,14 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -1276,10 +1270,10 @@ namespace SmartStepsServer.Migrations
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("ParentId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -1292,7 +1286,7 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.HasKey("UserId");
 
@@ -1303,7 +1297,7 @@ namespace SmartStepsServer.Migrations
 
                     b.ToTable("Users", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Users_Role", "\"Role\" IN ('Child', 'Parent', 'Admin', 'ContentCreator')");
+                            t.HasCheckConstraint("CK_Users_Role", "[Role] IN ('Child', 'Parent', 'Admin', 'ContentCreator')");
                         });
                 });
 
@@ -1311,26 +1305,26 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("AnswerId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AnswerId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AnswerId"));
 
                     b.Property<DateTime?>("AnsweredAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("AttemptCount")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<int>("FlashcardId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsCorrect")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("SelectedAnswer")
                         .IsRequired()
@@ -1339,10 +1333,10 @@ namespace SmartStepsServer.Migrations
                         .IsFixedLength();
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("AnswerId");
 
@@ -1352,9 +1346,9 @@ namespace SmartStepsServer.Migrations
 
                     b.ToTable("UserAnswer", null, t =>
                         {
-                            t.HasCheckConstraint("CK_UserAnswer_AttemptCount", "\"AttemptCount\" >= 1");
+                            t.HasCheckConstraint("CK_UserAnswer_AttemptCount", "[AttemptCount] >= 1");
 
-                            t.HasCheckConstraint("CK_UserAnswer_SelectedAnswer", "\"SelectedAnswer\" IN ('A', 'B')");
+                            t.HasCheckConstraint("CK_UserAnswer_SelectedAnswer", "[SelectedAnswer] IN ('A', 'B')");
                         });
                 });
 
@@ -1362,26 +1356,26 @@ namespace SmartStepsServer.Migrations
                 {
                     b.Property<int>("ProgressId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProgressId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProgressId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<int>("CurrentStep")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("IslandId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastAccessedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("SituationId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1389,10 +1383,10 @@ namespace SmartStepsServer.Migrations
                         .HasColumnType("varchar(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("ProgressId");
 
@@ -1406,7 +1400,7 @@ namespace SmartStepsServer.Migrations
 
                     b.ToTable("UserProgress", null, t =>
                         {
-                            t.HasCheckConstraint("CK_UserProgress_Status", "\"Status\" IN ('InProgress', 'Completed')");
+                            t.HasCheckConstraint("CK_UserProgress_Status", "[Status] IN ('InProgress', 'Completed')");
                         });
                 });
 

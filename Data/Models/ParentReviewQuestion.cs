@@ -20,10 +20,8 @@ public class ParentReviewQuestion
 
     public string? SuggestedActivity { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

@@ -18,13 +18,10 @@ public class PremiumCodeRedemption
     [Column(TypeName = "varchar(50)")]
     public string Code { get; set; } = null!;
 
-    [Column(TypeName = "datetime")]
     public DateTime RedeemedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     [ForeignKey(nameof(UserId))]

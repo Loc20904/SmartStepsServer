@@ -5,6 +5,8 @@ using SmartStepsServer.Services;
 
 LoadDotEnv(Path.Combine(AppContext.BaseDirectory, ".env"));
 LoadDotEnv(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+LoadDotEnv(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+UseLocalDatabaseHostOutsideContainer();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,16 +25,22 @@ if (!int.TryParse(port, out var parsedPort) || parsedPort is < 1 or > 65535)
 
 builder.WebHost.UseUrls($"http://+:{parsedPort}");
 
-var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+var configuredOrigins = builder.Configuration["Cors:AllowedOrigins"];
+if (string.IsNullOrWhiteSpace(configuredOrigins) && builder.Environment.IsDevelopment())
+{
+    configuredOrigins = "http://localhost:3000";
+}
+
+var allowedOrigins = (configuredOrigins ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
 
 // Add services to the container.
 builder.Services.AddDbContext<SmartStepsDbContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()));
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
 
 builder.Services.Configure<CloudinaryMediaOptions>(
     builder.Configuration.GetSection(CloudinaryMediaOptions.SectionName));
@@ -41,6 +49,7 @@ builder.Services.Configure<PayOsOptions>(
 
 builder.Services.AddHttpClient<ICloudinaryMediaService, CloudinaryMediaService>();
 builder.Services.AddHttpClient<IPayOsService, PayOsService>();
+builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddControllers();
 
@@ -62,12 +71,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<SmartStepsDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
 
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
@@ -135,4 +138,46 @@ static void LoadDotEnv(string path)
             Environment.SetEnvironmentVariable(key, value);
         }
     }
+}
+
+static void UseLocalDatabaseHostOutsideContainer()
+{
+    var isRunningInContainer = string.Equals(
+        Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
+        "true",
+        StringComparison.OrdinalIgnoreCase);
+
+    if (isRunningInContainer)
+    {
+        return;
+    }
+
+    const string connectionStringKey = "ConnectionStrings__DefaultConnection";
+    var connectionString = Environment.GetEnvironmentVariable(connectionStringKey);
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        return;
+    }
+
+    var usesDockerDatabaseHost =
+        connectionString.Contains("Host=smartsteps-db", StringComparison.OrdinalIgnoreCase) ||
+        connectionString.Contains("Server=smartsteps-db", StringComparison.OrdinalIgnoreCase);
+
+    connectionString = connectionString
+        .Replace("Host=smartsteps-db", "Host=localhost", StringComparison.OrdinalIgnoreCase)
+        .Replace("Server=smartsteps-db", "Server=localhost", StringComparison.OrdinalIgnoreCase);
+
+    var hostPortValue = Environment.GetEnvironmentVariable("POSTGRES_HOST_PORT");
+    if (usesDockerDatabaseHost &&
+        int.TryParse(hostPortValue, out var hostPort) &&
+        hostPort is >= 1 and <= 65535)
+    {
+        connectionString = connectionString.Replace(
+            "Port=5432",
+            $"Port={hostPort}",
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    Environment.SetEnvironmentVariable(connectionStringKey, connectionString);
 }

@@ -26,10 +26,8 @@ public class SituationStep
 
     public int OrderIndex { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

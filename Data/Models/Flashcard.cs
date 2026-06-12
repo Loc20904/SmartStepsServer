@@ -42,10 +42,8 @@ public class Flashcard
 
     public string? WrongFeedback { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

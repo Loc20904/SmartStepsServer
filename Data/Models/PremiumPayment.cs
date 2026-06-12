@@ -52,13 +52,10 @@ public class PremiumPayment
     [Column(TypeName = "varchar(500)")]
     public string? CancelUrl { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? PaidAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     [ForeignKey(nameof(UserId))]
