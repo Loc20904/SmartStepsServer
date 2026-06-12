@@ -5,6 +5,8 @@ using SmartStepsServer.Services;
 
 LoadDotEnv(Path.Combine(AppContext.BaseDirectory, ".env"));
 LoadDotEnv(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+LoadDotEnv(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+UseLocalDatabaseHostOutsideContainer();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +25,13 @@ if (!int.TryParse(port, out var parsedPort) || parsedPort is < 1 or > 65535)
 
 builder.WebHost.UseUrls($"http://+:{parsedPort}");
 
-var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+var configuredOrigins = builder.Configuration["Cors:AllowedOrigins"];
+if (string.IsNullOrWhiteSpace(configuredOrigins) && builder.Environment.IsDevelopment())
+{
+    configuredOrigins = "http://localhost:3000";
+}
+
+var allowedOrigins = (configuredOrigins ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
@@ -130,4 +138,46 @@ static void LoadDotEnv(string path)
             Environment.SetEnvironmentVariable(key, value);
         }
     }
+}
+
+static void UseLocalDatabaseHostOutsideContainer()
+{
+    var isRunningInContainer = string.Equals(
+        Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
+        "true",
+        StringComparison.OrdinalIgnoreCase);
+
+    if (isRunningInContainer)
+    {
+        return;
+    }
+
+    const string connectionStringKey = "ConnectionStrings__DefaultConnection";
+    var connectionString = Environment.GetEnvironmentVariable(connectionStringKey);
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        return;
+    }
+
+    var usesDockerDatabaseHost =
+        connectionString.Contains("Host=smartsteps-db", StringComparison.OrdinalIgnoreCase) ||
+        connectionString.Contains("Server=smartsteps-db", StringComparison.OrdinalIgnoreCase);
+
+    connectionString = connectionString
+        .Replace("Host=smartsteps-db", "Host=localhost", StringComparison.OrdinalIgnoreCase)
+        .Replace("Server=smartsteps-db", "Server=localhost", StringComparison.OrdinalIgnoreCase);
+
+    var hostPortValue = Environment.GetEnvironmentVariable("POSTGRES_HOST_PORT");
+    if (usesDockerDatabaseHost &&
+        int.TryParse(hostPortValue, out var hostPort) &&
+        hostPort is >= 1 and <= 65535)
+    {
+        connectionString = connectionString.Replace(
+            "Port=5432",
+            $"Port={hostPort}",
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    Environment.SetEnvironmentVariable(connectionStringKey, connectionString);
 }

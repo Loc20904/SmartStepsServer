@@ -41,6 +41,12 @@ public sealed class DatabaseMigrationService(
             {
                 return;
             }
+            catch (ObjectDisposedException)
+            {
+                // The host can dispose DI services before the background token is
+                // observed when startup fails, for example when the port is occupied.
+                return;
+            }
             catch (Exception exception)
             {
                 logger.LogError(
