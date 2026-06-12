@@ -32,10 +32,8 @@ public class User
 
     public int? ParentId { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

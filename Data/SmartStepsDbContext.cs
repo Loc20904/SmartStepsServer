@@ -35,7 +35,7 @@ public class SmartStepsDbContext : DbContext
         {
             entity.ToTable("Users", table =>
             {
-                table.HasCheckConstraint("CK_Users_Role", "[Role] IN ('Child', 'Parent', 'Admin', 'ContentCreator')");
+                table.HasCheckConstraint("CK_Users_Role", "\"Role\" IN ('Child', 'Parent', 'Admin', 'ContentCreator')");
             });
 
             entity.HasKey(e => e.UserId);
@@ -72,7 +72,7 @@ public class SmartStepsDbContext : DbContext
         {
             entity.ToTable("Island", table =>
             {
-                table.HasCheckConstraint("CK_Island_Status", "[Status] IN ('Active', 'Hidden')");
+                table.HasCheckConstraint("CK_Island_Status", "\"Status\" IN ('Active', 'Hidden')");
             });
 
             entity.HasKey(e => e.IslandId);
@@ -95,7 +95,7 @@ public class SmartStepsDbContext : DbContext
             {
                 table.HasCheckConstraint(
                     "CK_Situation_Status",
-                    "[Status] IN ('Draft', 'Pending', 'Approved', 'Rejected', 'Published', 'Hidden')");
+                    "\"Status\" IN ('Draft', 'Pending', 'Approved', 'Rejected', 'Published', 'Hidden')");
             });
 
             entity.HasKey(e => e.SituationId);
@@ -119,7 +119,7 @@ public class SmartStepsDbContext : DbContext
         {
             entity.ToTable("SituationStep", table =>
             {
-                table.HasCheckConstraint("CK_SituationStep_StepType", "[StepType] IN ('Intro', 'Story', 'Flashcard', 'Result')");
+                table.HasCheckConstraint("CK_SituationStep_StepType", "\"StepType\" IN ('Intro', 'Story', 'Flashcard', 'Result')");
             });
 
             entity.HasKey(e => e.StepId);
@@ -133,7 +133,7 @@ public class SmartStepsDbContext : DbContext
         {
             entity.ToTable("Flashcard", table =>
             {
-                table.HasCheckConstraint("CK_Flashcard_CorrectAnswer", "[CorrectAnswer] IN ('A', 'B')");
+                table.HasCheckConstraint("CK_Flashcard_CorrectAnswer", "\"CorrectAnswer\" IN ('A', 'B')");
             });
 
             entity.HasKey(e => e.FlashcardId);
@@ -184,12 +184,11 @@ public class SmartStepsDbContext : DbContext
         {
             entity.ToTable("UserProgress", table =>
             {
-                table.HasCheckConstraint("CK_UserProgress_Status", "[Status] IN ('InProgress', 'Completed')");
+                table.HasCheckConstraint("CK_UserProgress_Status", "\"Status\" IN ('InProgress', 'Completed')");
             });
 
             entity.HasKey(e => e.ProgressId);
             entity.Property(e => e.Status).HasColumnType("varchar(30)").HasMaxLength(30).IsRequired();
-            entity.Property(e => e.LastAccessedAt).HasColumnType("datetime");
             ConfigureAuditColumns(entity);
 
             entity.HasOne(e => e.User)
@@ -218,13 +217,12 @@ public class SmartStepsDbContext : DbContext
         {
             entity.ToTable("UserAnswer", table =>
             {
-                table.HasCheckConstraint("CK_UserAnswer_SelectedAnswer", "[SelectedAnswer] IN ('A', 'B')");
-                table.HasCheckConstraint("CK_UserAnswer_AttemptCount", "[AttemptCount] >= 1");
+                table.HasCheckConstraint("CK_UserAnswer_SelectedAnswer", "\"SelectedAnswer\" IN ('A', 'B')");
+                table.HasCheckConstraint("CK_UserAnswer_AttemptCount", "\"AttemptCount\" >= 1");
             });
 
             entity.HasKey(e => e.AnswerId);
             entity.Property(e => e.SelectedAnswer).HasColumnType("char(1)").HasMaxLength(1).IsFixedLength().IsRequired();
-            entity.Property(e => e.AnsweredAt).HasColumnType("datetime");
             ConfigureAuditColumns(entity);
 
             entity.HasOne(e => e.User)
@@ -264,13 +262,13 @@ public class SmartStepsDbContext : DbContext
             {
                 table.HasCheckConstraint(
                     "CK_PremiumPayment_Status",
-                    "[Status] IN ('Pending', 'Paid', 'Cancelled', 'Expired', 'Failed')");
-                table.HasCheckConstraint("CK_PremiumPayment_Amount", "[Amount] >= 0");
+                    "\"Status\" IN ('Pending', 'Paid', 'Cancelled', 'Expired', 'Failed')");
+                table.HasCheckConstraint("CK_PremiumPayment_Amount", "\"Amount\" >= 0");
             });
 
             entity.HasKey(e => e.PaymentId);
             entity.HasIndex(e => e.OrderCode).IsUnique();
-            entity.HasIndex(e => e.PaymentLinkId).IsUnique().HasFilter("[PaymentLinkId] IS NOT NULL");
+            entity.HasIndex(e => e.PaymentLinkId).IsUnique().HasFilter("\"PaymentLinkId\" IS NOT NULL");
             entity.Property(e => e.PlanCode).HasColumnType("varchar(50)").HasMaxLength(50).IsRequired();
             entity.Property(e => e.Currency).HasColumnType("varchar(10)").HasMaxLength(10).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(100).IsRequired();
@@ -294,10 +292,10 @@ public class SmartStepsDbContext : DbContext
             {
                 table.HasCheckConstraint(
                     "CK_PremiumSubscription_Status",
-                    "[Status] IN ('Active', 'Expired', 'Cancelled')");
+                    "\"Status\" IN ('Active', 'Expired', 'Cancelled')");
                 table.HasCheckConstraint(
                     "CK_PremiumSubscription_Source",
-                    "[Source] IN ('Payment', 'Code')");
+                    "\"Source\" IN ('Payment', 'Code')");
             });
 
             entity.HasKey(e => e.SubscriptionId);
@@ -305,8 +303,6 @@ public class SmartStepsDbContext : DbContext
             entity.Property(e => e.PlanCode).HasColumnType("varchar(50)").HasMaxLength(50).IsRequired();
             entity.Property(e => e.Status).HasColumnType("varchar(30)").HasMaxLength(30).IsRequired();
             entity.Property(e => e.Source).HasColumnType("varchar(30)").HasMaxLength(30).IsRequired();
-            entity.Property(e => e.StartedAt).HasColumnType("datetime");
-            entity.Property(e => e.ExpiresAt).HasColumnType("datetime");
             ConfigureAuditColumns(entity);
 
             entity.HasOne(e => e.User)
@@ -327,7 +323,6 @@ public class SmartStepsDbContext : DbContext
             entity.HasKey(e => e.RedemptionId);
             entity.HasIndex(e => new { e.UserId, e.Code }).IsUnique();
             entity.Property(e => e.Code).HasColumnType("varchar(50)").HasMaxLength(50).IsRequired();
-            entity.Property(e => e.RedeemedAt).HasColumnType("datetime");
             ConfigureAuditColumns(entity);
 
             entity.HasOne(e => e.User)
@@ -349,11 +344,9 @@ public class SmartStepsDbContext : DbContext
         where TEntity : class
     {
         entity.Property<DateTime>(nameof(User.CreatedAt))
-            .HasColumnType("datetime")
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        entity.Property<DateTime?>(nameof(User.UpdatedAt))
-            .HasColumnType("datetime");
+        entity.Property<DateTime?>(nameof(User.UpdatedAt));
     }
 
     private static void ConfigureNoActionDeletes(ModelBuilder modelBuilder)
@@ -368,7 +361,7 @@ public class SmartStepsDbContext : DbContext
 
     private static void ConfigureSeedData(ModelBuilder modelBuilder)
     {
-        var createdAt = new DateTime(2026, 5, 24);
+        var createdAt = new DateTime(2026, 5, 24, 0, 0, 0, DateTimeKind.Utc);
         var islands = new List<object>();
         var skills = new List<object>();
         var situations = new List<object>();

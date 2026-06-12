@@ -27,13 +27,10 @@ public class UserProgress
     [Column(TypeName = "varchar(30)")]
     public string Status { get; set; } = null!; // InProgress, Completed
 
-    [Column(TypeName = "datetime")]
     public DateTime? LastAccessedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

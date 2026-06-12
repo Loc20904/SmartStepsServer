@@ -28,16 +28,12 @@ public class PremiumSubscription
 
     public int? PaymentId { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime StartedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? ExpiresAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     [ForeignKey(nameof(UserId))]

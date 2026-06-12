@@ -26,13 +26,10 @@ public class UserAnswer
     [Range(1, int.MaxValue)]
     public int AttemptCount { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? AnsweredAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

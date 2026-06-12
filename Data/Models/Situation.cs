@@ -26,10 +26,8 @@ public class Situation
     [Column(TypeName = "varchar(30)")]
     public string Status { get; set; } = null!; // Draft, Pending, Approved, Rejected, Published, Hidden
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

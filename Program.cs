@@ -30,9 +30,9 @@ var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Emp
 
 // Add services to the container.
 builder.Services.AddDbContext<SmartStepsDbContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()));
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
 
 builder.Services.Configure<CloudinaryMediaOptions>(
     builder.Configuration.GetSection(CloudinaryMediaOptions.SectionName));
@@ -41,6 +41,7 @@ builder.Services.Configure<PayOsOptions>(
 
 builder.Services.AddHttpClient<ICloudinaryMediaService, CloudinaryMediaService>();
 builder.Services.AddHttpClient<IPayOsService, PayOsService>();
+builder.Services.AddHostedService<DatabaseMigrationService>();
 
 builder.Services.AddControllers();
 
@@ -62,12 +63,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<SmartStepsDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
 
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {

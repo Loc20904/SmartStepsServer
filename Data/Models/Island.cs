@@ -28,10 +28,8 @@ public class Island
     [Column(TypeName = "varchar(30)")]
     public string Status { get; set; } = null!; // Active, Hidden
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties
