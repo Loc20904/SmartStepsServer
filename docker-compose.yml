@@ -1,0 +1,88 @@
+name: smartsteps
+
+services:
+  smartsteps-db:
+    image: postgres:16-alpine
+    container_name: smartsteps-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-SmartSteps}"
+      POSTGRES_USER: "${POSTGRES_USER:-smartsteps}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-SmartSteps_Postgres_2026!Secure}"
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - smartsteps-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  smartsteps-api:
+    container_name: smartsteps-api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      PORT: "8080"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Host=smartsteps-db;Port=5432;Database=${POSTGRES_DB:-SmartSteps};Username=${POSTGRES_USER:-smartsteps};Password=${POSTGRES_PASSWORD:-SmartSteps_Postgres_2026!Secure};"
+      Cors__AllowedOrigins: "${CORS_ALLOWED_ORIGINS:-https://loc20904.github.io,https://winhtuan.id.vn,http://localhost:3000}"
+      Cloudinary__CloudName: "${Cloudinary__CloudName:-}"
+      Cloudinary__ApiKey: "${Cloudinary__ApiKey:-}"
+      Cloudinary__ApiSecret: "${Cloudinary__ApiSecret:-}"
+      Cloudinary__SignedUrlExpiresInSeconds: "${Cloudinary__SignedUrlExpiresInSeconds:-300}"
+      Cloudinary__ResourceType: "${Cloudinary__ResourceType:-video}"
+      Cloudinary__DeliveryType: "${Cloudinary__DeliveryType:-upload}"
+      PayOS__ClientId: "${PayOS__ClientId:-}"
+      PayOS__ApiKey: "${PayOS__ApiKey:-}"
+      PayOS__ChecksumKey: "${PayOS__ChecksumKey:-}"
+      PayOS__ReturnUrl: "${PayOS__ReturnUrl:-https://loc20904.github.io/SmartSteps_WebVersion/}"
+      PayOS__CancelUrl: "${PayOS__CancelUrl:-https://loc20904.github.io/SmartSteps_WebVersion/?paymentStatus=cancel}"
+      Swagger__Enabled: "true"
+      HttpsRedirection__Enabled: "false"
+    ports:
+      - "5000:8080"
+    depends_on:
+      smartsteps-db:
+        condition: service_healthy
+    networks:
+      - smartsteps-network
+
+  smartsteps-pgadmin:
+    image: dpage/pgadmin4:9
+    container_name: smartsteps-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL:-admin@smartsteps.com}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD:-AdminPass2026!Secure}"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "${PGADMIN_HOST_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      smartsteps-db:
+        condition: service_healthy
+    networks:
+      - smartsteps-network
+
+networks:
+  smartsteps-network:
+    name: smartsteps-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: smartsteps-postgres-data
+  pgadmin_data:
+    name: smartsteps-pgadmin-data
